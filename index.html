@@ -311,6 +311,17 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
       <button class="ctrl" onclick="skip(15)">⏩</button>
       <button class="ctrl" onclick="skip(15)">⏭</button>
     </div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px">
+      <span style="font-size:10px;font-family:monospace;color:var(--text3)">VOICE</span>
+      <select id="voice-select" style="background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:4px 10px;color:var(--text2);font-size:11px;font-family:monospace;outline:none;cursor:pointer">
+        <option value="Aoede">Aoede — Conversational</option>
+        <option value="Charon">Charon — Neutral</option>
+        <option value="Fenrir">Fenrir — Expressive</option>
+        <option value="Kore">Kore — Clear</option>
+        <option value="Puck">Puck — Friendly</option>
+      </select>
+      <div id="tts-status" style="font-size:10px;font-family:monospace;color:var(--purple3);display:none">● reading...</div>
+    </div>
   </div>
 </div>
 
@@ -412,32 +423,96 @@ function setChapter(num,title,dur){
   if(playing){playing=false;clearInterval(ticker);document.getElementById('play-btn').textContent='▶';}
 }
 
+let ttsAudio=null;
+let ttsPlaying=false;
+
 function togglePlay(){
-  playing=!playing;
-  document.getElementById('play-btn').textContent=playing?'⏸':'▶';
-  if(playing){
-    ticker=setInterval(()=>{
-      progress=Math.min(progress+0.05,100);
-      document.getElementById('prog-fill').style.width=progress+'%';
-      const s=Math.floor(progress*7.2);
-      document.getElementById('t-cur').textContent=Math.floor(s/60)+':'+(s%60).toString().padStart(2,'0');
-      if(progress>=100){playing=false;clearInterval(ticker);document.getElementById('play-btn').textContent='▶';}
-    },100);
-  } else clearInterval(ticker);
+  if(ttsPlaying){
+    // Pause TTS
+    if(ttsAudio){ttsAudio.pause();ttsPlaying=false;}
+    playing=false;clearInterval(ticker);
+    document.getElementById('play-btn').textContent='▶';
+    document.getElementById('tts-status').style.display='none';
+  } else {
+    // Start Gemini TTS
+    startGeminiTTS();
+  }
+}
+
+async function startGeminiTTS(){
+  const btn=document.getElementById('play-btn');
+  const status=document.getElementById('tts-status');
+  btn.textContent='⏳';
+  status.style.display='block';
+  const voice=document.getElementById('voice-select').value;
+  const chText=content[chapter.num]?.text.replace(/<[^>]*>/g,'')||'Chapter content loading...';
+  const truncated=chText.slice(0,4000);
+  try{
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${GEMINI}`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        contents:[{parts:[{text:truncated}]}],
+        generationConfig:{
+          responseModalities:['AUDIO'],
+          speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:voice}}}
+        }
+      })
+    });
+    const data=await res.json();
+    const audioB64=data?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    if(!audioB64){throw new Error('No audio returned');}
+    const binary=atob(audioB64);
+    const bytes=new Uint8Array(binary.length);
+    for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+    const blob=new Blob([bytes],{type:'audio/wav'});
+    const url=URL.createObjectURL(blob);
+    if(ttsAudio){ttsAudio.pause();URL.revokeObjectURL(ttsAudio.src);}
+    ttsAudio=new Audio(url);
+    ttsAudio.onplay=()=>{ttsPlaying=true;btn.textContent='⏸';startProgressTicker(ttsAudio);};
+    ttsAudio.onended=()=>{ttsPlaying=false;playing=false;btn.textContent='▶';progress=100;status.style.display='none';clearInterval(ticker);};
+    ttsAudio.onerror=()=>{ttsPlaying=false;btn.textContent='▶';status.style.display='none';alert('TTS error. Try again.');};
+    ttsAudio.play();
+  }catch(e){
+    btn.textContent='▶';status.style.display='none';
+    console.error(e);
+    alert('Gemini TTS error: '+e.message+'\nCheck your API key.');
+  }
+}
+
+function startProgressTicker(audio){
+  clearInterval(ticker);
+  ticker=setInterval(()=>{
+    if(!audio.duration||isNaN(audio.duration))return;
+    progress=(audio.currentTime/audio.duration)*100;
+    document.getElementById('prog-fill').style.width=progress+'%';
+    const s=Math.floor(audio.currentTime);
+    document.getElementById('t-cur').textContent=Math.floor(s/60)+':'+(s%60).toString().padStart(2,'0');
+    const tot=Math.floor(audio.duration);
+    document.getElementById('t-tot').textContent=Math.floor(tot/60)+':'+(tot%60).toString().padStart(2,'0');
+  },200);
 }
 
 function skip(s){
-  const tot=720;
-  const cur=(progress/100)*tot;
-  const nw=Math.max(0,Math.min(tot,cur+s));
-  progress=(nw/tot)*100;
-  document.getElementById('prog-fill').style.width=progress+'%';
-  document.getElementById('t-cur').textContent=Math.floor(nw/60)+':'+(nw%60).toString().padStart(2,'0');
+  if(ttsAudio&&!isNaN(ttsAudio.duration)){
+    ttsAudio.currentTime=Math.max(0,Math.min(ttsAudio.duration,ttsAudio.currentTime+s));
+  } else {
+    const tot=720;
+    const cur=(progress/100)*tot;
+    const nw=Math.max(0,Math.min(tot,cur+s));
+    progress=(nw/tot)*100;
+    document.getElementById('prog-fill').style.width=progress+'%';
+    document.getElementById('t-cur').textContent=Math.floor(nw/60)+':'+(nw%60).toString().padStart(2,'0');
+  }
 }
 
 function scrub(e,bar){
   const r=bar.getBoundingClientRect();
-  progress=Math.max(0,Math.min(100,((e.clientX-r.left)/r.width)*100));
+  const pct=Math.max(0,Math.min(100,((e.clientX-r.left)/r.width)*100));
+  if(ttsAudio&&!isNaN(ttsAudio.duration)){
+    ttsAudio.currentTime=(pct/100)*ttsAudio.duration;
+  }
+  progress=pct;
   document.getElementById('prog-fill').style.width=progress+'%';
 }
 
@@ -536,3 +611,4 @@ window.speechSynthesis&&window.speechSynthesis.getVoices();
 </script>
 </body>
 </html>
+<!-- this is just a test append - ignore -->
