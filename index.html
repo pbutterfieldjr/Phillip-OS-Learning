@@ -1,68 +1,322 @@
-🦉
-CRSE-001 — Python Basics
-CH-01 // Introduction to Python
-
-audio text
-Tests / Quizzes
-Study Materials
-Graphs & Maps
-PB
-COURSES
-CRSE-001
-Python Basics
-CRSE-002
-Data Structures
-CRSE-003
-Machine Learning
-Optional — Spotify
-🎵
-Focus Flow
-Study Mix · Spotify
-
-
-Course Viewer — CRSE-001 // Chapter 1
-Introduction to Python
-Python is a high-level, interpreted programming language known for its clear syntax and readability. Created by Guido van Rossum and first released in 1991, Python has grown to become one of the most widely used languages in the world.
-Its design philosophy emphasizes code readability with the use of significant indentation. Python is dynamically typed and garbage-collected, supporting multiple programming paradigms including structured, object-oriented, and functional programming.
-Why Python?
-Python is widely used in web development, data science, artificial intelligence, scientific computing, and automation. Its simplicity makes it an excellent choice for beginners while its power makes it indispensable to professionals.
-The Python Package Index (PyPI) hosts hundreds of thousands of third-party modules that extend Python's capabilities far beyond its standard library — making it one of the most versatile tools available.
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phillip-OS Learning</title>
 
 
 
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d0f;--bg2:#131317;--bg3:#1a1a20;--bg4:#222229;
+  --purple:#7c5cbf;--purple2:#9b7fe8;--purple3:#b8a0f0;--purple-dim:#2a1f4a;
+  --text:#e8e6f0;--text2:#9d9ab0;--text3:#5a5870;
+  --border:#2a2830;--border2:#3a3848;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;height:100vh;overflow:hidden;display:grid;grid-template-rows:56px 1fr}
+/* TOPBAR */
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px}
+.owl-btn{width:36px;height:36px;border-radius:50%;background:var(--purple-dim);border:1px solid var(--purple);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;flex-shrink:0;transition:all 0.2s}
+.owl-btn:hover{background:var(--purple);transform:scale(1.05)}
+.course-info{flex:1;min-width:0}
+.course-title{font-size:13px;font-weight:700;color:var(--text);letter-spacing:0.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chapter-name{font-size:11px;color:var(--purple3);font-family:'SF Mono','Monaco','Cascadia Code',monospace;letter-spacing:0.08em}
+.audio-btn{display:flex;align-items:center;gap:6px;background:var(--purple-dim);border:1px solid var(--purple);border-radius:20px;padding:6px 14px;cursor:pointer;font-size:11px;color:var(--purple3);font-family:'SF Mono','Monaco','Cascadia Code',monospace;letter-spacing:0.05em;transition:all 0.2s;flex-shrink:0}
+.audio-btn:hover{background:var(--purple);color:#fff}
+.topbar-tabs{display:flex;gap:6px;flex-shrink:0}
+.tab-btn{padding:5px 10px;border-radius:6px;font-size:11px;font-family:'SF Mono','Monaco','Cascadia Code',monospace;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;transition:all 0.2s;letter-spacing:0.05em}
+.tab-btn:hover{border-color:var(--purple);color:var(--purple3)}
+.tab-btn.active{background:var(--purple-dim);border-color:var(--purple);color:var(--purple3)}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+/* MAIN LAYOUT */
+.main{display:grid;grid-template-columns:200px 1fr 280px;overflow:hidden}
+/* LEFT PANEL */
+.left-panel{background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.panel-header{padding:10px 14px;border-bottom:1px solid var(--border);font-size:10px;font-family:'SF Mono','Monaco','Cascadia Code',monospace;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;flex-shrink:0}
+.course-list{flex:1;overflow-y:auto;padding:8px}
+.course-item{padding:10px;border-radius:8px;cursor:pointer;transition:all 0.2s;border:1px solid transparent;margin-bottom:4px}
+.course-item:hover{background:var(--bg3);border-color:var(--border)}
+.course-item.active{background:var(--purple-dim);border-color:var(--purple)}
+.course-item-id{font-size:10px;font-family:'SF Mono','Monaco','Cascadia Code',monospace;color:var(--purple3);margin-bottom:2px}
+.course-item-name{font-size:12px;color:var(--text);font-weight:500;line-height:1.3}
+.spotify-panel{border-top:1px solid var(--border);padding:12px;flex-shrink:0}
+.spotify-label{font-size:10px;font-family:'SF Mono','Monaco','Cascadia Code',monospace;color:var(--text3);letter-spacing:0.1em;margin-bottom:8px}
+.spotify-mock{background:var(--bg3);border-radius:8px;border:1px solid var(--border);padding:10px;display:flex;align-items:center;gap:8px}
+.spotify-icon{width:28px;height:28px;border-radius:6px;background:#1DB954;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+.spotify-text{flex:1;min-width:0}
+.spotify-track{font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spotify-artist{font-size:10px;color:var(--text3)}
+/* CENTER */
+.center-panel{display:flex;flex-direction:column;background:var(--bg);overflow:hidden}
+.viewer{flex:1;overflow-y:auto;padding:28px;position:relative}
+.viewer-content{max-width:700px;margin:0 auto}
+.viewer-label{font-size:10px;font-family:'SF Mono','Monaco','Cascadia Code',monospace;color:var(--purple3);letter-spacing:0.1em;margin-bottom:20px;display:flex;align-items:center;gap:6px}
+.viewer-label::before{content:'';display:block;width:7px;height:7px;border-radius:50%;background:var(--purple)}
+.viewer-text h2{font-size:20px;color:var(--text);margin-bottom:14px;margin-top:28px;font-weight:700;line-height:1.3}
+.viewer-text h2:first-child{margin-top:0}
+.viewer-text p{font-size:14px;line-height:1.9;color:var(--text2);margin-bottom:14px}
+.viewer-text .hl{color:var(--purple3);font-weight:500}
+.fullscreen-btn{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:8px;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text3);transition:all 0.2s}
+.fullscreen-btn:hover{border-color:var(--purple);color:var(--purple3)}
+/* PLAYER BAR */
+.player-bar{background:var(--bg2);border-top:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:16px;flex-shrink:0}
+.player-controls{display:flex;align-items:center;gap:10px}
+.ctrl-btn{width:32px;height:32px;border-radius:50%;background:transparent;border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);transition:all 0.2s;font-size:14px}
+.ctrl-btn:hover{border-color:var(--purple);color:var(--purple3)}
+.ctrl-btn.play{width:40px;height:40px;background:var(--purple);border-color:var(--purple);color:#fff;font-size:16px}
+.ctrl-btn.play:hover{background:var(--purple2)}
+.progress-area{flex:1;display:flex;flex-direction:column;gap:5px}
+.progress-bar{height:3px;background:var(--bg4);border-radius:2px;cursor:pointer;position:relative}
+.progress-fill{height:100%;background:var(--purple);border-radius:2px;width:0%;transition:width 0.1s}
+.time-row{display:flex;justify-content:space-between}
+.time-txt{font-size:10px;font-family:'SF Mono','Monaco','Cascadia Code',monospace;color:var(--text3)}
+.track-name{font-size:10px;font-family:'SF Mono','Monaco','Cascadia Code',monospace;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+.vol-area{display:flex;align-items:center;gap:8px}
+.vol-area i{color:var(--text3);font-size:16px}
+/* RIGHT PANEL */
+.right-panel{background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.chapter-list{flex:1;overflow-y:auto;padding:8px}
+.chapter-item{padding:10px;border-radius:8px;cursor:pointer;transition:all 0.2s;border:1px solid transparent;margin-bottom:4px;display:flex;align-items:center;gap:10px}
+.chapter-item:hover{background:var(--bg3);border-color:var(--border)}
+.chapter-item.active{background:var(--purple-dim);border-color:var(--purple)}
+.chapter-num{width:24px;height:24px;border-radius:6px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:10px;font-family:'SF Mono','Monaco','Cascadia Code',monospace;color:var(--text3);flex-shrink:0}
+.chapter-item.active .chapter-num{background:var(--purple);color:#fff}
+.chapter-info{flex:1;min-width:0}
+.chapter-title{font-size:12px;color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chapter-meta{font-size:10px;color:var(--text3);font-family:'SF Mono','Monaco','Cascadia Code',monospace;margin-top:2px}
+/* SECONDARY VIEWER */
+.secondary-viewer{border-top:1px solid var(--border);height:210px;display:flex;flex-direction:column;flex-shrink:0}
+.secondary-header{padding:8px 12px;border-bottom:1px solid var(--border);display:flex;gap:6px;align-items:center;flex-shrink:0}
+.sec-tab{font-size:10px;font-family:'SF Mono','Monaco','Cascadia Code',monospace;color:var(--text3);cursor:pointer;padding:3px 8px;border-radius:4px;border:1px solid transparent;transition:all 0.2s}
+.sec-tab:hover{color:var(--purple3)}
+.sec-tab.active{border-color:var(--purple);color:var(--purple3);background:var(--purple-dim)}
+.secondary-content{flex:1;overflow-y:auto;padding:10px}
+.asset-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;cursor:pointer;transition:all 0.2s;border:1px solid transparent}
+.asset-item:hover{background:var(--bg3);border-color:var(--border)}
+.asset-icon{width:28px;height:28px;border-radius:6px;background:var(--purple-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;color:var(--purple3)}
+.asset-name{font-size:11px;color:var(--text2);line-height:1.3}
+.asset-size{font-size:10px;color:var(--text3);font-family:'SF Mono','Monaco','Cascadia Code',monospace;margin-top:1px}
+.empty-state{text-align:center;padding:24px;color:var(--text3);font-size:11px;font-family:'SF Mono','Monaco','Cascadia Code',monospace;line-height:1.8}
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="owl-btn" title="Browse courses" onclick="toggleCoursePanel()">🦉</div>
+  <div class="course-info">
+    <div class="course-title" id="top-course-title">CRSE-001 — Python Basics</div>
+    <div class="chapter-name" id="top-chapter-name">CH-01 // Introduction to Python</div>
+  </div>
+  <div class="audio-btn">
+    🎧 audio text
+  </div>
+  <div class="topbar-tabs">
+    <button class="tab-btn active" onclick="setTab(this)">Tests / Quizzes</button>
+    <button class="tab-btn" onclick="setTab(this)">Study Materials</button>
+    <button class="tab-btn" onclick="setTab(this)">Graphs & Maps</button>
+  </div>
+  <div class="avatar">PB</div>
+</div>
 
+<div class="main">
+  <div class="left-panel">
+    <div class="panel-header">Courses</div>
+    <div class="course-list" id="course-list">
+      <div class="course-item active" onclick="selectCourse(this,'CRSE-001','Python Basics','Introduction to the Python programming language and its core concepts.')">
+        <div class="course-item-id">CRSE-001</div>
+        <div class="course-item-name">Python Basics</div>
+      </div>
+      <div class="course-item" onclick="selectCourse(this,'CRSE-002','Data Structures','Fundamental data structures and algorithms for efficient programming.')">
+        <div class="course-item-id">CRSE-002</div>
+        <div class="course-item-name">Data Structures</div>
+      </div>
+      <div class="course-item" onclick="selectCourse(this,'CRSE-003','Machine Learning','Core machine learning concepts, models, and practical applications.')">
+        <div class="course-item-id">CRSE-003</div>
+        <div class="course-item-name">Machine Learning</div>
+      </div>
+    </div>
+    <div class="spotify-panel">
+      <div class="spotify-label">Optional — Spotify</div>
+      <div class="spotify-mock">
+        <div class="spotify-icon">🎵</div>
+        <div class="spotify-text">
+          <div class="spotify-track">Focus Flow</div>
+          <div class="spotify-artist">Study Mix · Spotify</div>
+        </div>
+        ▶
+      </div>
+    </div>
+  </div>
 
+  <div class="center-panel">
+    <div class="viewer">
+      <button class="fullscreen-btn" title="Fullscreen" onclick="toggleFullscreen()">
+        ⛶
+      </button>
+      <div class="viewer-content">
+        <div class="viewer-label" id="viewer-label">Course Viewer — CRSE-001 // Chapter 1</div>
+        <div class="viewer-text" id="viewer-text">
+          <h2>Introduction to Python</h2>
+          <p>Python is a <span class="hl">high-level, interpreted programming language</span> known for its clear syntax and readability. Created by Guido van Rossum and first released in 1991, Python has grown to become one of the most widely used languages in the world.</p>
+          <p>Its design philosophy emphasizes code readability with the use of significant indentation. Python is <span class="hl">dynamically typed</span> and <span class="hl">garbage-collected</span>, supporting multiple programming paradigms including structured, object-oriented, and functional programming.</p>
+          <h2>Why Python?</h2>
+          <p>Python is widely used in web development, data science, artificial intelligence, scientific computing, and automation. Its simplicity makes it an excellent choice for beginners while its power makes it indispensable to professionals.</p>
+          <p>The Python Package Index (PyPI) hosts hundreds of thousands of third-party modules that extend Python's capabilities far beyond its standard library — making it one of the most versatile tools available.</p>
+        </div>
+      </div>
+    </div>
+    <div class="player-bar">
+      <div class="player-controls">
+        <button class="ctrl-btn" title="Previous">⏮</button>
+        <button class="ctrl-btn" title="Rewind 15s">⏪</button>
+        <button class="ctrl-btn play" id="play-btn" onclick="togglePlay()" title="Play/Pause">▶</button>
+        <button class="ctrl-btn" title="Forward 15s">⏩</button>
+        <button class="ctrl-btn" title="Next">⏭</button>
+      </div>
+      <div class="progress-area">
+        <div class="progress-bar" id="progress-bar" onclick="scrub(event,this)">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <div class="time-row">
+          <span class="time-txt" id="time-current">0:00</span>
+          <span class="track-name" id="track-name">NotebookLM Audio · Python Basics Ch.1</span>
+          <span class="time-txt">35:22</span>
+        </div>
+      </div>
+      <div class="vol-area">
+        🔊
+        <input type="range" style="width:60px;accent-color:var(--purple);height:3px" min="0" max="100" value="75">
+      </div>
+    </div>
+  </div>
 
-0:00
-NotebookLM Audio · Python Basics Ch.1
-35:22
+  <div class="right-panel">
+    <div class="panel-header">Chapters</div>
+    <div class="chapter-list" id="chapter-list">
+      <div class="chapter-item active" onclick="selectChapter(this,1,'Introduction to Python','12 min','Course Viewer — CRSE-001 // Chapter 1')">
+        <div class="chapter-num">01</div>
+        <div class="chapter-info">
+          <div class="chapter-title">Introduction to Python</div>
+          <div class="chapter-meta">12 min</div>
+        </div>
+      </div>
+      <div class="chapter-item" onclick="selectChapter(this,2,'Variables & Data Types','18 min','Course Viewer — CRSE-001 // Chapter 2')">
+        <div class="chapter-num">02</div>
+        <div class="chapter-info">
+          <div class="chapter-title">Variables & Data Types</div>
+          <div class="chapter-meta">18 min</div>
+        </div>
+      </div>
+      <div class="chapter-item" onclick="selectChapter(this,3,'Control Flow','22 min','Course Viewer — CRSE-001 // Chapter 3')">
+        <div class="chapter-num">03</div>
+        <div class="chapter-info">
+          <div class="chapter-title">Control Flow</div>
+          <div class="chapter-meta">22 min</div>
+        </div>
+      </div>
+      <div class="chapter-item" onclick="selectChapter(this,4,'Functions','25 min','Course Viewer — CRSE-001 // Chapter 4')">
+        <div class="chapter-num">04</div>
+        <div class="chapter-info">
+          <div class="chapter-title">Functions</div>
+          <div class="chapter-meta">25 min</div>
+        </div>
+      </div>
+      <div class="chapter-item" onclick="selectChapter(this,5,'Modules & Libraries','20 min','Course Viewer — CRSE-001 // Chapter 5')">
+        <div class="chapter-num">05</div>
+        <div class="chapter-info">
+          <div class="chapter-title">Modules & Libraries</div>
+          <div class="chapter-meta">20 min</div>
+        </div>
+      </div>
+    </div>
+    <div class="secondary-viewer">
+      <div class="secondary-header">
+        <span class="sec-tab active" onclick="setSecTab(this,'study')">Study</span>
+        <span class="sec-tab" onclick="setSecTab(this,'maps')">Maps</span>
+        <span class="sec-tab" onclick="setSecTab(this,'audio')">Audio</span>
+      </div>
+      <div class="secondary-content" id="secondary-content">
+        <div class="asset-item">
+          <div class="asset-icon">📄</div>
+          <div><div class="asset-name">Python Basics — Study Guide</div><div class="asset-size">PDF · 2.4 MB</div></div>
+        </div>
+        <div class="asset-item">
+          <div class="asset-icon">📝</div>
+          <div><div class="asset-name">Chapter 1 Notes</div><div class="asset-size">DOC · 840 KB</div></div>
+        </div>
+        <div class="asset-item">
+          <div class="asset-icon">✅</div>
+          <div><div class="asset-name">Quiz Prep Sheet</div><div class="asset-size">PDF · 1.1 MB</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
+<script>
+let playing=false,progress=0,interval=null;
 
-CHAPTERS
-01
-Introduction to Python
-12 min
-02
-Variables & Data Types
-18 min
-03
-Control Flow
-22 min
-04
-Functions
-25 min
-05
-Modules & Libraries
-20 min
-Study
-Maps
-Audio
+function togglePlay(){
+  playing=!playing;
+  document.getElementById('play-btn').innerHTML=playing?'⏸':'▶';
+  if(playing){interval=setInterval(()=>{progress=Math.min(progress+0.05,100);document.getElementById('progress-fill').style.width=progress+'%';const s=Math.floor(progress*35.37);document.getElementById('time-current').textContent=Math.floor(s/60)+':'+(s%60).toString().padStart(2,'0');},100);}
+  else clearInterval(interval);
+}
 
-Python Basics — Study Guide
-PDF · 2.4 MB
+function scrub(e,bar){
+  const r=bar.getBoundingClientRect();
+  progress=Math.max(0,Math.min(100,((e.clientX-r.left)/r.width)*100));
+  document.getElementById('progress-fill').style.width=progress+'%';
+}
 
-Chapter 1 Notes
-DOC · 840 KB
+function selectCourse(el,id,name,desc){
+  document.querySelectorAll('.course-item').forEach(i=>i.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('top-course-title').textContent=id+' — '+name;
+  document.getElementById('track-name').textContent='NotebookLM Audio · '+name+' Ch.1';
+  document.getElementById('viewer-label').textContent='Course Viewer — '+id+' // Chapter 1';
+  document.getElementById('top-chapter-name').textContent='CH-01 // Chapter 1';
+  document.getElementById('viewer-text').innerHTML='<h2>'+name+'</h2><p>'+desc+'</p><p>Select a chapter from the right panel to begin studying.</p>';
+  document.querySelectorAll('.chapter-item').forEach(i=>i.classList.remove('active'));
+  document.querySelector('.chapter-item').classList.add('active');
+}
 
-Quiz Prep Sheet
-PDF · 1.1 MB
+function selectChapter(el,num,title,duration,label){
+  document.querySelectorAll('.chapter-item').forEach(i=>i.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('top-chapter-name').textContent='CH-0'+num+' // '+title;
+  document.getElementById('viewer-label').textContent=label;
+  document.getElementById('track-name').textContent='NotebookLM Audio · '+title;
+  progress=0;document.getElementById('progress-fill').style.width='0%';
+  document.getElementById('time-current').textContent='0:00';
+  if(playing){playing=false;clearInterval(interval);document.getElementById('play-btn').innerHTML='▶';}
+}
+
+function setTab(el){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function setSecTab(el,tab){
+  document.querySelectorAll('.sec-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const c=document.getElementById('secondary-content');
+  if(tab==='maps'){
+    c.innerHTML='<div class="asset-item"><div class="asset-icon">📊</div><div><div class="asset-name">Python Ecosystem Map</div><div class="asset-size">PNG · 3.2 MB</div></div></div><div class="asset-item"><div class="asset-icon">📈</div><div><div class="asset-name">Language Timeline Chart</div><div class="asset-size">PNG · 1.8 MB</div></div></div>';
+  } else if(tab==='audio'){
+    c.innerHTML='<div class="asset-item"><div class="asset-icon">🎙</div><div><div class="asset-name">Ch.1 Podcast — NotebookLM</div><div class="asset-size">MP3 · 35:22</div></div></div><div class="asset-item"><div class="asset-icon">🎙</div><div><div class="asset-name">Ch.2 Podcast — NotebookLM</div><div class="asset-size">MP3 · 42:10</div></div></div>';
+  } else {
+    c.innerHTML='<div class="asset-item"><div class="asset-icon">📄</div><div><div class="asset-name">Python Basics — Study Guide</div><div class="asset-size">PDF · 2.4 MB</div></div></div><div class="asset-item"><div class="asset-icon">📝</div><div><div class="asset-name">Chapter 1 Notes</div><div class="asset-size">DOC · 840 KB</div></div></div><div class="asset-item"><div class="asset-icon">✅</div><div><div class="asset-name">Quiz Prep Sheet</div><div class="asset-size">PDF · 1.1 MB</div></div></div>';
+  }
+}
+
+function toggleFullscreen(){document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();}
+function toggleCoursePanel(){}
+</script>
+</body>
+</html>
