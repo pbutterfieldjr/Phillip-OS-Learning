@@ -439,6 +439,28 @@ function togglePlay(){
   }
 }
 
+function pcmToWav(pcmData, sampleRate=24000, channels=1, bitDepth=16){
+  const dataSize=pcmData.length;
+  const buffer=new ArrayBuffer(44+dataSize);
+  const view=new DataView(buffer);
+  const writeStr=(off,str)=>{for(let i=0;i<str.length;i++)view.setUint8(off+i,str.charCodeAt(i));};
+  writeStr(0,'RIFF');
+  view.setUint32(4,36+dataSize,true);
+  writeStr(8,'WAVE');
+  writeStr(12,'fmt ');
+  view.setUint32(16,16,true);
+  view.setUint16(20,1,true);
+  view.setUint16(22,channels,true);
+  view.setUint32(24,sampleRate,true);
+  view.setUint32(28,sampleRate*channels*(bitDepth/8),true);
+  view.setUint16(32,channels*(bitDepth/8),true);
+  view.setUint16(34,bitDepth,true);
+  writeStr(36,'data');
+  view.setUint32(40,dataSize,true);
+  new Uint8Array(buffer,44).set(pcmData);
+  return buffer;
+}
+
 async function startGeminiTTS(){
   const btn=document.getElementById('play-btn');
   const status=document.getElementById('tts-status');
@@ -446,13 +468,13 @@ async function startGeminiTTS(){
   status.style.display='block';
   const voice=document.getElementById('voice-select').value;
   const chText=content[chapter.num]?.text.replace(/<[^>]*>/g,'')||'Chapter content loading...';
-  const truncated=chText.slice(0,4000);
+  const truncated='Please read the following chapter content aloud in a clear, natural voice: '+chText.slice(0,3500);
   try{
     const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${GEMINI}`,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        contents:[{parts:[{text:truncated}]}],
+        contents:[{role:'user',parts:[{text:truncated}]}],
         generationConfig:{
           responseModalities:['AUDIO'],
           speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:voice}}}
@@ -460,23 +482,25 @@ async function startGeminiTTS(){
       })
     });
     const data=await res.json();
-    const audioB64=data?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-    if(!audioB64){throw new Error('No audio returned');}
-    const binary=atob(audioB64);
-    const bytes=new Uint8Array(binary.length);
-    for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
-    const blob=new Blob([bytes],{type:'audio/wav'});
+    if(data.error){throw new Error(data.error.message);}
+    const inlineData=data?.candidates?.[0]?.content?.parts?.[0]?.inlineData;
+    if(!inlineData?.data){throw new Error('No audio in response');}
+    const binary=atob(inlineData.data);
+    const pcm=new Uint8Array(binary.length);
+    for(let i=0;i<binary.length;i++)pcm[i]=binary.charCodeAt(i);
+    const wavBuffer=pcmToWav(pcm,24000,1,16);
+    const blob=new Blob([wavBuffer],{type:'audio/wav'});
     const url=URL.createObjectURL(blob);
     if(ttsAudio){ttsAudio.pause();URL.revokeObjectURL(ttsAudio.src);}
     ttsAudio=new Audio(url);
     ttsAudio.onplay=()=>{ttsPlaying=true;btn.textContent='⏸';startProgressTicker(ttsAudio);};
     ttsAudio.onended=()=>{ttsPlaying=false;playing=false;btn.textContent='▶';progress=100;status.style.display='none';clearInterval(ticker);};
-    ttsAudio.onerror=()=>{ttsPlaying=false;btn.textContent='▶';status.style.display='none';alert('TTS error. Try again.');};
+    ttsAudio.onerror=()=>{ttsPlaying=false;btn.textContent='▶';status.style.display='none';alert('Audio playback error.');};
     ttsAudio.play();
   }catch(e){
     btn.textContent='▶';status.style.display='none';
     console.error(e);
-    alert('Gemini TTS error: '+e.message+'\nCheck your API key.');
+    alert('Gemini TTS error: '+e.message);
   }
 }
 
