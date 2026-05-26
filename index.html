@@ -10,558 +10,814 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
---bg:#0d0d0f;--bg2:#131317;--bg3:#1a1a20;--bg4:#222229;
---purple:#7c5cbf;--purple2:#9b7fe8;--purple3:#b8a0f0;--purple-dim:#2a1f4a;
---text:#e8e6f0;--text2:#9d9ab0;--text3:#5a5870;
---border:#2a2830;--border2:#3a3848;
---safe-top:env(safe-area-inset-top);
---safe-bottom:env(safe-area-inset-bottom);
+  --bg:#0d0d0f;--bg2:#131317;--bg3:#1a1a20;--bg4:#222229;
+  --purple:#7c5cbf;--purple2:#9b7fe8;--purple3:#b8a0f0;--purple-dim:#2a1f4a;
+  --text:#e8e6f0;--text2:#9d9ab0;--text3:#5a5870;
+  --border:#2a2830;--border2:#3a3848;
+  --safe-top:env(safe-area-inset-top);
+  --safe-bottom:env(safe-area-inset-bottom);
+  --sidebar-w:220px;--right-w:280px;
 }
 html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif}
 
-/* ── VIEWS ── */
-.view{display:none;height:100vh;height:100dvh;flex-direction:column;overflow:hidden}
-.view.active{display:flex}
+/* ══════════════════════════════════
+   DESKTOP LAYOUT (default — landscape)
+   ══════════════════════════════════ */
 
-/* ── TOPBAR ── */
-.topbar{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:12px 16px;gap:10px;flex-shrink:0;padding-top:calc(12px + var(--safe-top));}
-.owl{font-size:24px;cursor:pointer;flex-shrink:0}
+.app{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
+
+/* TOP BAR */
+.topbar{
+  background:var(--bg2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:10px 16px;gap:12px;flex-shrink:0;
+  padding-top:calc(10px + var(--safe-top));
+}
+.owl{font-size:22px;cursor:pointer;flex-shrink:0}
 .course-info{flex:1;min-width:0}
-.course-title{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.chapter-sub{font-size:11px;color:var(--purple3);font-family:monospace;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.course-title{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chapter-sub{font-size:10px;color:var(--purple3);font-family:monospace;margin-top:1px}
+.top-tabs{display:flex;gap:2px;flex-shrink:0}
+.ttab{padding:6px 12px;border-radius:8px;font-size:11px;font-family:monospace;color:var(--text3);cursor:pointer;transition:all 0.15s;border:1px solid transparent}
+.ttab:hover{color:var(--text2);background:var(--bg3)}
+.ttab.active{color:var(--purple3);background:var(--purple-dim);border-color:var(--purple)}
 .topbar-actions{display:flex;gap:8px;flex-shrink:0}
-.icon-btn{width:36px;height:36px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:all 0.2s;color:var(--text2)}
-.icon-btn:active{background:var(--purple-dim);border-color:var(--purple)}
+.icon-btn{width:32px;height:32px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:all 0.2s;color:var(--text2)}
+.icon-btn:hover{background:var(--purple-dim);border-color:var(--purple)}
 .icon-btn.accent{background:var(--purple-dim);border-color:var(--purple);color:var(--purple3)}
 
-/* ── BROWSER ── */
-#browser-view .topbar{justify-content:space-between}
-.browser-header{font-size:18px;font-weight:700}
-.browser-sub{font-size:12px;color:var(--text3);font-family:monospace;margin-top:2px}
-.course-grid{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;padding-bottom:calc(16px + var(--safe-bottom))}
-.course-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:18px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:14px}
-.course-card:active{background:var(--purple-dim);border-color:var(--purple);transform:scale(0.98)}
-.course-card-icon{width:48px;height:48px;border-radius:12px;background:var(--purple-dim);border:1px solid var(--purple);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
-.course-card-info{flex:1;min-width:0}
-.course-card-id{font-size:10px;font-family:monospace;color:var(--purple3);margin-bottom:3px}
-.course-card-name{font-size:15px;font-weight:600}
-.course-card-desc{font-size:12px;color:var(--text2);margin-top:3px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.course-card-arrow{color:var(--text3);font-size:18px;flex-shrink:0}
+/* MAIN BODY — 3 columns */
+.main{display:flex;flex:1;overflow:hidden}
 
-/* ── PLAYER ── */
-#player-view{position:relative}
-.player-tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0}
-.ptab{flex:1;padding:11px 4px;text-align:center;font-size:11px;font-family:monospace;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;letter-spacing:0.03em}
-.ptab.active{color:var(--purple3);border-bottom-color:var(--purple)}
-.tab-pane{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.tab-pane.active{display:block}
+/* LEFT SIDEBAR */
+.sidebar-left{
+  width:var(--sidebar-w);flex-shrink:0;
+  background:var(--bg2);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.sidebar-label{font-size:9px;font-family:monospace;color:var(--text3);letter-spacing:0.12em;text-transform:uppercase;padding:12px 14px 6px}
+.course-list{flex:1;overflow-y:auto;padding:0 8px 8px}
+.course-item{display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:10px;cursor:pointer;transition:all 0.15s;margin-bottom:3px;border:1px solid transparent}
+.course-item:hover{background:var(--bg3);border-color:var(--border)}
+.course-item.active{background:var(--purple-dim);border-color:var(--purple)}
+.ci-icon{width:32px;height:32px;border-radius:8px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.course-item.active .ci-icon{background:var(--purple-dim)}
+.ci-info{flex:1;min-width:0}
+.ci-id{font-size:9px;font-family:monospace;color:var(--purple3)}
+.ci-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sidebar-divider{height:1px;background:var(--border);margin:8px 14px}
+.spotify-block{padding:10px 14px 14px;flex-shrink:0}
+.spotify-label{font-size:9px;font-family:monospace;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px}
+.spotify-card{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:10px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:all 0.15s}
+.spotify-card:hover{border-color:var(--purple);background:var(--purple-dim)}
+.spotify-ico{font-size:18px}
+.spotify-info{flex:1;min-width:0}
+.spotify-name{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spotify-meta{font-size:10px;color:var(--text3);margin-top:1px}
 
-/* TEXTBOOK */
-.textbook-content{padding:20px 18px;padding-bottom:8px}
-.ch-label{font-size:10px;font-family:monospace;color:var(--purple3);margin-bottom:16px;display:flex;align-items:center;gap:6px;letter-spacing:0.08em}
-.ch-label::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--purple);display:block;flex-shrink:0}
-.ch-text h2{font-size:19px;font-weight:700;margin:20px 0 10px;line-height:1.3;color:var(--text)}
+/* CENTER — content */
+.content-area{
+  flex:1;overflow:hidden;display:flex;flex-direction:column;
+}
+.content-header{
+  padding:16px 24px 12px;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.content-ch-label{font-size:10px;font-family:monospace;color:var(--purple3);display:flex;align-items:center;gap:6px;margin-bottom:6px;letter-spacing:0.06em}
+.content-ch-label::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--purple);display:block}
+.content-title{font-size:20px;font-weight:700;line-height:1.2}
+.content-scroll{flex:1;overflow-y:auto;padding:24px 28px}
+.ch-text h2{font-size:17px;font-weight:700;margin:20px 0 8px;line-height:1.3;color:var(--text)}
 .ch-text h2:first-child{margin-top:0}
-.ch-text p{font-size:15px;line-height:1.85;color:var(--text2);margin-bottom:14px}
+.ch-text p{font-size:14px;line-height:1.85;color:var(--text2);margin-bottom:12px}
 .ch-text .hl{color:var(--purple3);font-weight:600}
 
-/* CHAPTERS */
-.chapter-scroll{padding:12px}
-.ch-row{display:flex;align-items:center;gap:12px;padding:14px 12px;border-radius:12px;cursor:pointer;border:1px solid transparent;transition:all 0.15s;margin-bottom:6px}
-.ch-row:active{background:var(--purple-dim);border-color:var(--purple)}
+/* Tab panes in center */
+.tab-pane{display:none;height:100%;flex-direction:column}
+.tab-pane.active{display:flex}
+#pane-textbook{overflow:hidden}
+#pane-textbook .content-scroll{flex:1}
+
+/* Study / assets */
+.asset-scroll{flex:1;overflow-y:auto;padding:16px 24px}
+.asset-section{margin-bottom:20px}
+.asset-section-label{font-size:9px;font-family:monospace;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px}
+.asset-row{display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg2);margin-bottom:6px;cursor:pointer;transition:all 0.15s}
+.asset-row:hover{border-color:var(--purple);background:var(--purple-dim)}
+.asset-ico{width:36px;height:36px;border-radius:8px;background:var(--purple-dim);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.asset-info{flex:1;min-width:0}
+.asset-name{font-size:13px;font-weight:500}
+.asset-meta{font-size:10px;color:var(--text3);font-family:monospace;margin-top:2px}
+
+/* RIGHT SIDEBAR */
+.sidebar-right{
+  width:var(--right-w);flex-shrink:0;
+  background:var(--bg2);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.chapter-list{flex:1;overflow-y:auto;padding:8px}
+.ch-row{display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:10px;cursor:pointer;border:1px solid transparent;transition:all 0.15s;margin-bottom:3px}
+.ch-row:hover{background:var(--bg3);border-color:var(--border)}
 .ch-row.active{background:var(--purple-dim);border-color:var(--purple)}
-.ch-badge{width:36px;height:36px;border-radius:10px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:12px;font-family:monospace;color:var(--text3);flex-shrink:0;font-weight:500}
+.ch-badge{width:32px;height:32px;border-radius:8px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:11px;font-family:monospace;color:var(--text3);flex-shrink:0;font-weight:500}
 .ch-row.active .ch-badge{background:var(--purple);color:#fff}
 .ch-row-info{flex:1}
-.ch-row-title{font-size:14px;font-weight:500}
-.ch-row-meta{font-size:11px;color:var(--text3);font-family:monospace;margin-top:2px}
-.ch-row-arrow{color:var(--text3);font-size:14px}
+.ch-row-title{font-size:12px;font-weight:500}
+.ch-row-meta{font-size:10px;color:var(--text3);font-family:monospace;margin-top:1px}
 
-/* ASSETS */
-.asset-scroll{padding:12px}
-.asset-section{margin-bottom:16px}
-.asset-section-label{font-size:10px;font-family:monospace;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;padding:0 4px}
-.asset-row{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--bg2);margin-bottom:8px;cursor:pointer;transition:all 0.15s}
-.asset-row:active{border-color:var(--purple);background:var(--purple-dim)}
-.asset-ico{width:40px;height:40px;border-radius:10px;background:var(--purple-dim);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
-.asset-info{flex:1;min-width:0}
-.asset-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.asset-meta{font-size:11px;color:var(--text3);font-family:monospace;margin-top:2px}
-
-/* ── PLAYER BAR ── */
-.player-bar{background:var(--bg2);border-top:1px solid var(--border);padding:12px 16px;flex-shrink:0;padding-bottom:calc(12px + var(--safe-bottom));}
-.now-playing{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.np-icon{width:36px;height:36px;border-radius:8px;background:var(--purple-dim);border:1px solid var(--purple);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+/* PLAYER BAR — bottom of right sidebar */
+.player-bar{
+  background:var(--bg2);border-top:1px solid var(--border);
+  padding:14px 16px;flex-shrink:0;
+  padding-bottom:calc(14px + var(--safe-bottom));
+}
+.now-playing{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.np-icon{width:32px;height:32px;border-radius:6px;background:var(--purple-dim);border:1px solid var(--purple);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
 .np-info{flex:1;min-width:0}
-.np-title{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.np-type{font-size:10px;color:var(--purple3);font-family:monospace;margin-top:2px}
+.np-title{font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.np-type{font-size:9px;color:var(--purple3);font-family:monospace;margin-top:1px}
 .progress-wrap{margin-bottom:10px}
-.progress-bar{height:4px;background:var(--bg4);border-radius:2px;cursor:pointer;position:relative;margin-bottom:6px}
+.progress-bar{height:3px;background:var(--bg4);border-radius:2px;cursor:pointer;margin-bottom:5px}
 .progress-fill{height:100%;background:var(--purple);border-radius:2px;width:0%;transition:width 0.1s}
 .time-row{display:flex;justify-content:space-between}
-.time-txt{font-size:10px;font-family:monospace;color:var(--text3)}
-.controls{display:flex;align-items:center;justify-content:center;gap:20px}
-.ctrl{width:40px;height:40px;border-radius:50%;background:transparent;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:18px;transition:all 0.2s}
-.ctrl:active{color:var(--purple3);transform:scale(0.9)}
-.ctrl.play{width:52px;height:52px;background:var(--purple);border-radius:50%;color:#fff;font-size:22px}
-.ctrl.play:active{background:var(--purple2);transform:scale(0.95)}
+.time-txt{font-size:9px;font-family:monospace;color:var(--text3)}
+.controls{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:10px}
+.ctrl{width:34px;height:34px;border-radius:50%;background:transparent;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:15px;transition:all 0.2s}
+.ctrl:hover{color:var(--purple3)}
+.ctrl.play{width:44px;height:44px;background:var(--purple);border-radius:50%;color:#fff;font-size:18px}
+.ctrl.play:hover{background:var(--purple2)}
+.voice-row{display:flex;align-items:center;gap:6px}
+.voice-label{font-size:9px;font-family:monospace;color:var(--text3);flex-shrink:0}
+.voice-select{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:16px;padding:3px 8px;color:var(--text2);font-size:10px;font-family:monospace;outline:none;cursor:pointer}
+.tts-status{font-size:9px;font-family:monospace;color:var(--purple3);display:none;flex-shrink:0}
 
-/* ── TUTOR ── */
-#tutor-view .topbar{padding-bottom:12px}
-.tutor-context{background:var(--purple-dim);border-bottom:1px solid var(--purple);padding:8px 16px;flex-shrink:0;display:flex;align-items:center;gap:8px}
-.ctx-badge{font-size:10px;font-family:monospace;color:var(--purple3);background:var(--bg);border:1px solid var(--purple);border-radius:20px;padding:3px 10px}
-.ctx-label{font-size:11px;color:var(--text3)}
-.tutor-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch}
-.msg{max-width:88%;padding:12px 14px;border-radius:18px;font-size:14px;line-height:1.65;word-wrap:break-word}
-.msg.user{align-self:flex-end;background:var(--purple);color:#fff;border-bottom-right-radius:4px}
-.msg.ai{align-self:flex-start;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px}
+/* ── TUTOR VIEW ── */
+#tutor-view{display:none;flex-direction:column;height:100vh;height:100dvh}
+#tutor-view.active{display:flex}
+.tutor-topbar{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:10px 16px;gap:12px;flex-shrink:0;padding-top:calc(10px + var(--safe-top));}
+.tutor-context{background:var(--purple-dim);border-bottom:1px solid var(--purple);padding:6px 16px;flex-shrink:0;display:flex;align-items:center;gap:8px}
+.ctx-badge{font-size:9px;font-family:monospace;color:var(--purple3);background:var(--bg);border:1px solid var(--purple);border-radius:16px;padding:2px 8px}
+.ctx-label{font-size:10px;color:var(--text3)}
+.tutor-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;max-width:800px;width:100%;margin:0 auto}
+.msg{max-width:80%;padding:10px 14px;border-radius:16px;font-size:13px;line-height:1.65;word-wrap:break-word}
+.msg.user{align-self:flex-end;background:var(--purple);color:#fff;border-bottom-right-radius:3px}
+.msg.ai{align-self:flex-start;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:3px}
 .msg.thinking{color:var(--text3);font-style:italic}
-.tutor-bar{background:var(--bg2);border-top:1px solid var(--border);padding:10px 12px;display:flex;gap:8px;align-items:flex-end;padding-bottom:calc(10px + var(--safe-bottom));flex-shrink:0;}
-.t-input{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:22px;padding:10px 16px;color:var(--text);font-size:14px;resize:none;max-height:100px;line-height:1.5;font-family:inherit;outline:none}
+.tutor-bar{background:var(--bg2);border-top:1px solid var(--border);padding:10px 16px;display:flex;gap:8px;align-items:flex-end;padding-bottom:calc(10px + var(--safe-bottom));flex-shrink:0;max-width:800px;width:100%;margin:0 auto}
+.t-input{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:8px 14px;color:var(--text);font-size:13px;resize:none;max-height:100px;line-height:1.5;font-family:inherit;outline:none}
 .t-input:focus{border-color:var(--purple)}
-.t-btn{width:42px;height:42px;border-radius:50%;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;flex-shrink:0;transition:all 0.2s}
+.t-btn{width:38px;height:38px;border-radius:50%;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;flex-shrink:0;transition:all 0.2s}
 .t-btn.send{background:var(--purple);color:#fff}
-.t-btn.send:active{background:var(--purple2);transform:scale(0.95)}
+.t-btn.send:hover{background:var(--purple2)}
 .t-btn.mic{background:var(--bg3);border:1px solid var(--border2);color:var(--text2)}
 .t-btn.mic.on{background:var(--purple-dim);border-color:var(--purple);color:var(--purple3);animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
-.tutor-welcome{text-align:center;padding:32px 20px}
+.tutor-welcome{text-align:center;padding:40px 20px}
 .tutor-welcome-icon{font-size:48px;margin-bottom:16px}
 .tutor-welcome-title{font-size:16px;font-weight:600;margin-bottom:8px}
 .tutor-welcome-sub{font-size:13px;color:var(--text2);line-height:1.6}
-.quick-prompts{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px}
-.qp{background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:7px 14px;font-size:12px;color:var(--text2);cursor:pointer;transition:all 0.2s}
-.qp:active{border-color:var(--purple);color:var(--purple3);background:var(--purple-dim)}
+.quick-prompts{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px;max-width:500px;margin-left:auto;margin-right:auto}
+.qp{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:6px 12px;font-size:11px;color:var(--text2);cursor:pointer;transition:all 0.2s}
+.qp:hover{border-color:var(--purple);color:var(--purple3);background:var(--purple-dim)}
+
 ::-webkit-scrollbar{width:3px}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 
-/* ═══════════════════════════════════════
-   DESKTOP LANDSCAPE — 768px+
-   Player splits: content left, controls right
-   ═══════════════════════════════════════ */
-@media (min-width: 768px) {
-  /* Browser: grid layout */
-  .course-grid{flex-direction:row;flex-wrap:wrap;align-content:flex-start;max-width:1200px;margin:0 auto;width:100%}
-  .course-card{width:calc(33.333% - 8px);flex-shrink:0}
-  .browser-header{font-size:22px}
+/* ══════════════════════════════════
+   MOBILE PORTRAIT — under 768px
+   Single column, stacked, original mobile layout
+   ══════════════════════════════════ */
+@media (max-width: 767px) {
+  /* Hide desktop sidebars */
+  .sidebar-left{display:none}
+  .sidebar-right{display:none}
+  .top-tabs{display:none}
 
-  /* Player: side-by-side */
-  #player-view{flex-direction:column}
-  #player-view .topbar{padding-top:12px}
-  .player-body{display:flex;flex:1;overflow:hidden}
-  .player-left{display:flex;flex-direction:column;flex:1;overflow:hidden;border-right:1px solid var(--border)}
-  .player-right{width:360px;flex-shrink:0;display:flex;flex-direction:column;background:var(--bg2)}
+  /* Main becomes a full-screen view switcher */
+  .app{display:block;height:100vh;height:100dvh;overflow:hidden}
+  .main{display:block;height:100%}
 
-  /* Tab panes fill left column */
-  .tab-pane{height:100%}
-  .tab-pane.active{display:flex;flex-direction:column}
-  .textbook-content{padding:28px 32px;overflow-y:auto;flex:1}
-  .ch-text h2{font-size:22px}
-  .ch-text p{font-size:16px;line-height:1.9}
-  .chapter-scroll{overflow-y:auto;flex:1;padding:20px 24px}
-  .asset-scroll{overflow-y:auto;flex:1}
+  /* Mobile views */
+  .mobile-view{display:none;height:100vh;height:100dvh;flex-direction:column;overflow:hidden}
+  .mobile-view.active{display:flex}
 
-  /* Player bar fills right panel */
-  .player-bar{flex:1;border-top:none;padding:28px 24px;display:flex;flex-direction:column;justify-content:center;padding-bottom:28px}
-  .now-playing{margin-bottom:24px}
-  .np-title{font-size:15px}
-  .np-icon{width:44px;height:44px;font-size:20px}
-  .progress-wrap{margin-bottom:20px}
-  .controls{gap:16px;margin-top:12px}
-  .ctrl.play{width:60px;height:60px;font-size:26px}
+  /* Mobile browser */
+  #mobile-browser .topbar{justify-content:space-between;padding-top:calc(12px + var(--safe-top))}
+  .browser-header{font-size:18px;font-weight:700}
+  .browser-sub{font-size:12px;color:var(--text3);font-family:monospace;margin-top:2px}
+  .course-grid{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;padding-bottom:calc(16px + var(--safe-bottom))}
+  .course-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:18px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:14px}
+  .course-card:active{background:var(--purple-dim);border-color:var(--purple);transform:scale(0.98)}
+  .course-card-icon{width:48px;height:48px;border-radius:12px;background:var(--purple-dim);border:1px solid var(--purple);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+  .course-card-info{flex:1;min-width:0}
+  .course-card-id{font-size:10px;font-family:monospace;color:var(--purple3);margin-bottom:3px}
+  .course-card-name{font-size:15px;font-weight:600}
+  .course-card-desc{font-size:12px;color:var(--text2);margin-top:3px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .course-card-arrow{color:var(--text3);font-size:18px;flex-shrink:0}
 
-  /* Voice row at bottom of right panel */
-  .voice-row{padding:16px 24px;border-top:1px solid var(--border)}
+  /* Mobile player */
+  #mobile-player .topbar{padding-top:calc(12px + var(--safe-top))}
+  .player-tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0}
+  .ptab{flex:1;padding:11px 4px;text-align:center;font-size:11px;font-family:monospace;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s}
+  .ptab.active{color:var(--purple3);border-bottom-color:var(--purple)}
+  .mpane{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .mpane.active{display:block}
+  .textbook-content{padding:20px 18px}
+  .ch-label-m{font-size:10px;font-family:monospace;color:var(--purple3);margin-bottom:16px;display:flex;align-items:center;gap:6px;letter-spacing:0.08em}
+  .ch-label-m::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--purple);display:block;flex-shrink:0}
 
-  /* Tutor wider */
-  .tutor-msgs{max-width:820px;margin:0 auto;width:100%}
-  .msg{max-width:70%}
-  .quick-prompts{max-width:620px;margin:16px auto 0}
-}
+  /* Mobile player bar */
+  .mobile-player-bar{background:var(--bg2);border-top:1px solid var(--border);padding:12px 16px;flex-shrink:0;padding-bottom:calc(12px + var(--safe-bottom))}
+  .controls{gap:20px}
+  .ctrl{width:40px;height:40px;font-size:18px}
+  .ctrl.play{width:52px;height:52px;font-size:22px}
 
-@media (min-width:1200px){
-  .player-right{width:420px}
-  .course-card{width:calc(25% - 9px)}
+  /* Mobile chapter list */
+  .m-chapter-scroll{padding:12px}
+  .m-ch-row{display:flex;align-items:center;gap:12px;padding:14px 12px;border-radius:12px;cursor:pointer;border:1px solid transparent;transition:all 0.15s;margin-bottom:6px}
+  .m-ch-row:active,.m-ch-row.active{background:var(--purple-dim);border-color:var(--purple)}
+  .m-ch-badge{width:36px;height:36px;border-radius:10px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:12px;font-family:monospace;color:var(--text3);flex-shrink:0}
+  .m-ch-row.active .m-ch-badge{background:var(--purple);color:#fff}
+
+  /* Hide desktop app shell on mobile */
+  .topbar.desktop-only{display:none}
+  .content-area{display:none}
 }
 </style>
 </head>
 <body>
 
-<!-- BROWSER -->
-<div class="view active" id="browser-view">
-<div class="topbar">
-<div>
-<div class="browser-header">🦉 My Courses</div>
-<div class="browser-sub">PLMS · Phillip-OS Learning</div>
-</div>
-</div>
-<div class="course-grid">
-<div class="course-card" onclick="loadCourse('CRSE-001','Python Basics','Introduction to Python programming','🐍')">
-<div class="course-card-icon">🐍</div>
-<div class="course-card-info">
-<div class="course-card-id">CRSE-001</div>
-<div class="course-card-name">Python Basics</div>
-<div class="course-card-desc">Introduction to Python programming language</div>
-</div>
-<div class="course-card-arrow">›</div>
-</div>
-<div class="course-card" onclick="loadCourse('CRSE-002','Data Structures','Fundamental data structures and algorithms','🗂')">
-<div class="course-card-icon">🗂</div>
-<div class="course-card-info">
-<div class="course-card-id">CRSE-002</div>
-<div class="course-card-name">Data Structures</div>
-<div class="course-card-desc">Fundamental data structures and algorithms</div>
-</div>
-<div class="course-card-arrow">›</div>
-</div>
-<div class="course-card" onclick="loadCourse('CRSE-003','Machine Learning','Core ML concepts and applications','🤖')">
-<div class="course-card-icon">🤖</div>
-<div class="course-card-info">
-<div class="course-card-id">CRSE-003</div>
-<div class="course-card-name">Machine Learning</div>
-<div class="course-card-desc">Core ML concepts and practical applications</div>
-</div>
-<div class="course-card-arrow">›</div>
-</div>
-</div>
+<!-- ════════ DESKTOP APP ════════ -->
+<div class="app" id="desktop-app">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="owl" title="My Courses">🦉</div>
+    <div class="course-info">
+      <div class="course-title" id="d-course-title">Python Basics</div>
+      <div class="chapter-sub" id="d-chapter-sub">CRSE-001 // CH-01 // Introduction to Python</div>
+    </div>
+    <div class="top-tabs">
+      <div class="ttab active" onclick="switchTopTab(this,'textbook')">Textbook</div>
+      <div class="ttab" onclick="switchTopTab(this,'study')">Study Materials</div>
+      <div class="ttab" onclick="switchTopTab(this,'maps')">Charts & Maps</div>
+      <div class="ttab" onclick="switchTopTab(this,'podcast')">Podcast</div>
+    </div>
+    <div class="topbar-actions">
+      <div class="icon-btn accent" onclick="showTutor()" title="AI Tutor">🧠</div>
+    </div>
+  </div>
+
+  <!-- MAIN 3-COLUMN -->
+  <div class="main">
+
+    <!-- LEFT SIDEBAR — courses -->
+    <div class="sidebar-left">
+      <div class="sidebar-label">Courses</div>
+      <div class="course-list">
+        <div class="course-item active" onclick="selectCourse(this,'CRSE-001','Python Basics','🐍',1,'Introduction to Python')">
+          <div class="ci-icon">🐍</div>
+          <div class="ci-info">
+            <div class="ci-id">CRSE-001</div>
+            <div class="ci-name">Python Basics</div>
+          </div>
+        </div>
+        <div class="course-item" onclick="selectCourse(this,'CRSE-002','Data Structures','🗂',1,'Arrays & Lists')">
+          <div class="ci-icon">🗂</div>
+          <div class="ci-info">
+            <div class="ci-id">CRSE-002</div>
+            <div class="ci-name">Data Structures</div>
+          </div>
+        </div>
+        <div class="course-item" onclick="selectCourse(this,'CRSE-003','Machine Learning','🤖',1,'Intro to ML')">
+          <div class="ci-icon">🤖</div>
+          <div class="ci-info">
+            <div class="ci-id">CRSE-003</div>
+            <div class="ci-name">Machine Learning</div>
+          </div>
+        </div>
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="spotify-block">
+        <div class="spotify-label">Optional — Spotify</div>
+        <div class="spotify-card">
+          <div class="spotify-ico">🎵</div>
+          <div class="spotify-info">
+            <div class="spotify-name">Focus Flow</div>
+            <div class="spotify-meta">Study Mix · Spotify</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER — content -->
+    <div class="content-area">
+
+      <!-- Textbook pane -->
+      <div class="tab-pane active" id="pane-textbook">
+        <div class="content-header">
+          <div class="content-ch-label" id="d-ch-label">Chapter 1 — Introduction to Python</div>
+          <div class="content-title" id="d-ch-title">Course Viewer — CRSE-001 // Chapter 1</div>
+        </div>
+        <div class="content-scroll">
+          <div class="ch-text" id="d-ch-text">
+            <h2>Introduction to Python</h2>
+            <p>Python is a <span class="hl">high-level, interpreted programming language</span> known for its clear syntax and readability. Created by Guido van Rossum and first released in 1991, Python has become one of the most widely used languages in the world.</p>
+            <p>Its design philosophy emphasizes code readability with significant indentation. Python is <span class="hl">dynamically typed</span> and <span class="hl">garbage-collected</span>, supporting structured, object-oriented, and functional programming.</p>
+            <h2>Why Python?</h2>
+            <p>Python is widely used in web development, data science, artificial intelligence, scientific computing, and automation. Its simplicity makes it excellent for beginners while its power makes it indispensable to professionals.</p>
+            <p>The <span class="hl">Python Package Index (PyPI)</span> hosts hundreds of thousands of third-party modules that extend Python's capabilities far beyond its standard library.</p>
+            <h2>Getting Started</h2>
+            <p>Python code is written in plain text files with a <span class="hl">.py extension</span>. The interpreter reads and executes your code line by line, making it easy to test and debug as you learn.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Study pane -->
+      <div class="tab-pane" id="pane-study">
+        <div class="asset-scroll">
+          <div class="asset-section">
+            <div class="asset-section-label">Study Materials</div>
+            <div class="asset-row"><div class="asset-ico">📄</div><div class="asset-info"><div class="asset-name">Python Basics — Study Guide</div><div class="asset-meta">PDF · 2.4 MB · NotebookLM</div></div></div>
+            <div class="asset-row"><div class="asset-ico">📝</div><div class="asset-info"><div class="asset-name">Chapter 1 Notes</div><div class="asset-meta">DOC · 840 KB</div></div></div>
+            <div class="asset-row"><div class="asset-ico">✅</div><div class="asset-info"><div class="asset-name">Quiz Prep Sheet</div><div class="asset-meta">PDF · 1.1 MB · NotebookLM</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Maps pane -->
+      <div class="tab-pane" id="pane-maps">
+        <div class="asset-scroll">
+          <div class="asset-section">
+            <div class="asset-section-label">Charts & Maps</div>
+            <div class="asset-row"><div class="asset-ico">📊</div><div class="asset-info"><div class="asset-name">Python Ecosystem Map</div><div class="asset-meta">PNG · Charts folder</div></div></div>
+            <div class="asset-row"><div class="asset-ico">🗺</div><div class="asset-info"><div class="asset-name">Control Flow Diagram</div><div class="asset-meta">PNG · Charts folder</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Podcast pane -->
+      <div class="tab-pane" id="pane-podcast">
+        <div class="asset-scroll">
+          <div class="asset-section">
+            <div class="asset-section-label">NotebookLM Episodes</div>
+            <div class="asset-row" onclick="loadPodcast(1)"><div class="asset-ico">🎙</div><div class="asset-info"><div class="asset-name">Ch.1 Deep Dive</div><div class="asset-meta">MP3 · 35:22 · NotebookLM</div></div></div>
+            <div class="asset-row" onclick="loadPodcast(2)"><div class="asset-ico">🎙</div><div class="asset-info"><div class="asset-name">Ch.2 Deep Dive</div><div class="asset-meta">MP3 · 42:10 · NotebookLM</div></div></div>
+            <div class="asset-row" onclick="loadPodcast(3)"><div class="asset-ico">🎙</div><div class="asset-info"><div class="asset-name">Ch.3 Deep Dive</div><div class="asset-meta">MP3 · 38:45 · NotebookLM</div></div></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content-area -->
+
+    <!-- RIGHT SIDEBAR — chapters + player -->
+    <div class="sidebar-right">
+      <div class="sidebar-label">Chapters</div>
+      <div class="chapter-list" id="d-chapter-list">
+        <div class="ch-row active" onclick="pickChapter(this,1,'Introduction to Python','12 min')">
+          <div class="ch-badge">01</div>
+          <div class="ch-row-info"><div class="ch-row-title">Introduction to Python</div><div class="ch-row-meta">12 min</div></div>
+        </div>
+        <div class="ch-row" onclick="pickChapter(this,2,'Variables & Data Types','18 min')">
+          <div class="ch-badge">02</div>
+          <div class="ch-row-info"><div class="ch-row-title">Variables & Data Types</div><div class="ch-row-meta">18 min</div></div>
+        </div>
+        <div class="ch-row" onclick="pickChapter(this,3,'Control Flow','22 min')">
+          <div class="ch-badge">03</div>
+          <div class="ch-row-info"><div class="ch-row-title">Control Flow</div><div class="ch-row-meta">22 min</div></div>
+        </div>
+        <div class="ch-row" onclick="pickChapter(this,4,'Functions','25 min')">
+          <div class="ch-badge">04</div>
+          <div class="ch-row-info"><div class="ch-row-title">Functions</div><div class="ch-row-meta">25 min</div></div>
+        </div>
+        <div class="ch-row" onclick="pickChapter(this,5,'Modules & Libraries','20 min')">
+          <div class="ch-badge">05</div>
+          <div class="ch-row-info"><div class="ch-row-title">Modules & Libraries</div><div class="ch-row-meta">20 min</div></div>
+        </div>
+      </div>
+
+      <!-- Player bar -->
+      <div class="player-bar">
+        <div class="now-playing">
+          <div class="np-icon" id="np-icon">📖</div>
+          <div class="np-info">
+            <div class="np-title" id="np-title">Ch.1 — Introduction to Python</div>
+            <div class="np-type" id="np-type">Textbook Audio · Gemini TTS</div>
+          </div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bar" onclick="scrub(event,this)"><div class="progress-fill" id="prog-fill"></div></div>
+          <div class="time-row"><span class="time-txt" id="t-cur">0:00</span><span class="time-txt" id="t-tot">12:00</span></div>
+        </div>
+        <div class="controls">
+          <button class="ctrl" onclick="skip(-15)">⏪</button>
+          <button class="ctrl play" id="play-btn" onclick="togglePlay()">▶</button>
+          <button class="ctrl" onclick="skip(15)">⏩</button>
+        </div>
+        <div class="voice-row">
+          <span class="voice-label">VOICE</span>
+          <select id="voice-select" class="voice-select">
+            <option value="Aoede">Aoede</option>
+            <option value="Charon">Charon</option>
+            <option value="Fenrir">Fenrir</option>
+            <option value="Kore">Kore</option>
+            <option value="Puck">Puck</option>
+          </select>
+          <div id="tts-status" class="tts-status">● live</div>
+        </div>
+      </div>
+    </div><!-- /sidebar-right -->
+
+  </div><!-- /main -->
+</div><!-- /desktop-app -->
+
+<!-- ════════ TUTOR OVERLAY (both mobile + desktop) ════════ -->
+<div id="tutor-view">
+  <div class="tutor-topbar">
+    <div class="owl" onclick="hideTutor()" style="font-size:18px">‹</div>
+    <div class="course-info">
+      <div class="course-title">AI Tutor</div>
+      <div class="chapter-sub">Groq · Llama 3.3 70B</div>
+    </div>
+    <div class="topbar-actions">
+      <div class="icon-btn" onclick="clearChat()">🗑</div>
+    </div>
+  </div>
+  <div class="tutor-context">
+    <div class="ctx-label">Context:</div>
+    <div class="ctx-badge" id="ctx-badge">Ch.1 — Introduction to Python</div>
+  </div>
+  <div class="tutor-msgs" id="tutor-msgs">
+    <div class="tutor-welcome">
+      <div class="tutor-welcome-icon">🧠</div>
+      <div class="tutor-welcome-title">Your AI Tutor</div>
+      <div class="tutor-welcome-sub">Ask me anything about what you're studying.</div>
+      <div class="quick-prompts">
+        <div class="qp" onclick="quickSend('Explain the key concepts from this chapter simply')">Explain key concepts</div>
+        <div class="qp" onclick="quickSend('Quiz me on this chapter')">Quiz me</div>
+        <div class="qp" onclick="quickSend('Give me 3 real world examples')">Real world examples</div>
+        <div class="qp" onclick="quickSend('Summarize in 5 bullet points')">Summarize</div>
+        <div class="qp" onclick="quickSend('What should I focus on most?')">What to focus on</div>
+        <div class="qp" onclick="quickSend('How does this connect to what comes next?')">What comes next</div>
+      </div>
+    </div>
+  </div>
+  <div class="tutor-bar" style="max-width:100%">
+    <button class="t-btn mic" id="mic-btn" onclick="toggleMic()">🎤</button>
+    <textarea class="t-input" id="t-input" placeholder="Ask anything..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    <button class="t-btn send" onclick="sendMsg()">↑</button>
+  </div>
 </div>
 
-<!-- PLAYER -->
-<div class="view" id="player-view">
-<div class="topbar">
-<div class="owl" onclick="showView('browser-view')">🦉</div>
-<div class="course-info">
-<div class="course-title" id="p-title">Python Basics</div>
-<div class="chapter-sub" id="p-sub">CH-01 // Introduction to Python</div>
-</div>
-<div class="topbar-actions">
-<div class="icon-btn accent" onclick="showView('tutor-view')" title="AI Tutor">🧠</div>
-</div>
+<!-- ════════ MOBILE VIEWS ════════ -->
+<div class="mobile-view active" id="mobile-browser" style="display:none">
+  <div class="topbar">
+    <div><div class="browser-header">🦉 My Courses</div><div class="browser-sub">PLMS · Phillip-OS Learning</div></div>
+  </div>
+  <div class="course-grid">
+    <div class="course-card" onclick="mobileLoadCourse('CRSE-001','Python Basics','🐍')">
+      <div class="course-card-icon">🐍</div>
+      <div class="course-card-info"><div class="course-card-id">CRSE-001</div><div class="course-card-name">Python Basics</div><div class="course-card-desc">Introduction to Python programming language</div></div>
+      <div class="course-card-arrow">›</div>
+    </div>
+    <div class="course-card" onclick="mobileLoadCourse('CRSE-002','Data Structures','🗂')">
+      <div class="course-card-icon">🗂</div>
+      <div class="course-card-info"><div class="course-card-id">CRSE-002</div><div class="course-card-name">Data Structures</div><div class="course-card-desc">Fundamental data structures and algorithms</div></div>
+      <div class="course-card-arrow">›</div>
+    </div>
+    <div class="course-card" onclick="mobileLoadCourse('CRSE-003','Machine Learning','🤖')">
+      <div class="course-card-icon">🤖</div>
+      <div class="course-card-info"><div class="course-card-id">CRSE-003</div><div class="course-card-name">Machine Learning</div><div class="course-card-desc">Core ML concepts and practical applications</div></div>
+      <div class="course-card-arrow">›</div>
+    </div>
+  </div>
 </div>
 
-<!-- player-body: flex row on desktop, flex column on mobile -->
-<div class="player-body">
-
-  <!-- LEFT: tabs + content -->
-  <div class="player-left">
-    <div class="player-tabs">
-      <div class="ptab active" onclick="switchTab(this,'textbook')">Textbook</div>
-      <div class="ptab" onclick="switchTab(this,'chapters')">Chapters</div>
-      <div class="ptab" onclick="switchTab(this,'study')">Study</div>
-      <div class="ptab" onclick="switchTab(this,'podcast')">Podcast</div>
+<div class="mobile-view" id="mobile-player" style="display:none">
+  <div class="topbar">
+    <div class="owl" onclick="showMobileView('mobile-browser')">🦉</div>
+    <div class="course-info">
+      <div class="course-title" id="m-title">Python Basics</div>
+      <div class="chapter-sub" id="m-sub">CH-01 // Introduction to Python</div>
     </div>
-    <div class="tab-pane active" id="pane-textbook">
-      <div class="textbook-content">
-        <div class="ch-label" id="ch-label">Chapter 1 — Introduction to Python</div>
-        <div class="ch-text" id="ch-text">
-          <h2>Introduction to Python</h2>
-          <p>Python is a <span class="hl">high-level, interpreted programming language</span> known for its clear syntax and readability. Created by Guido van Rossum and first released in 1991, Python has become one of the most widely used languages in the world.</p>
-          <p>Its design philosophy emphasizes code readability with significant indentation. Python is <span class="hl">dynamically typed</span> and <span class="hl">garbage-collected</span>, supporting structured, object-oriented, and functional programming.</p>
-          <h2>Why Python?</h2>
-          <p>Python is widely used in web development, data science, artificial intelligence, scientific computing, and automation. Its simplicity makes it excellent for beginners while its power makes it indispensable to professionals.</p>
-          <h2>Getting Started</h2>
-          <p>Python code is written in plain text files with a <span class="hl">.py extension</span>. The interpreter reads and executes your code line by line, making it easy to test and debug as you learn.</p>
-        </div>
-      </div>
+    <div class="topbar-actions">
+      <div class="icon-btn accent" onclick="showTutor()">🧠</div>
     </div>
-    <div class="tab-pane" id="pane-chapters">
-      <div class="chapter-scroll" id="chapter-scroll">
-        <div class="ch-row active" onclick="pickChapter(this,1,'Introduction to Python','12 min')"><div class="ch-badge">01</div><div class="ch-row-info"><div class="ch-row-title">Introduction to Python</div><div class="ch-row-meta">12 min · Textbook + Audio</div></div><div class="ch-row-arrow">›</div></div>
-        <div class="ch-row" onclick="pickChapter(this,2,'Variables & Data Types','18 min')"><div class="ch-badge">02</div><div class="ch-row-info"><div class="ch-row-title">Variables & Data Types</div><div class="ch-row-meta">18 min · Textbook + Audio</div></div><div class="ch-row-arrow">›</div></div>
-        <div class="ch-row" onclick="pickChapter(this,3,'Control Flow','22 min')"><div class="ch-badge">03</div><div class="ch-row-info"><div class="ch-row-title">Control Flow</div><div class="ch-row-meta">22 min · Textbook + Audio</div></div><div class="ch-row-arrow">›</div></div>
-        <div class="ch-row" onclick="pickChapter(this,4,'Functions','25 min')"><div class="ch-badge">04</div><div class="ch-row-info"><div class="ch-row-title">Functions</div><div class="ch-row-meta">25 min · Textbook + Audio</div></div><div class="ch-row-arrow">›</div></div>
-        <div class="ch-row" onclick="pickChapter(this,5,'Modules & Libraries','20 min')"><div class="ch-badge">05</div><div class="ch-row-info"><div class="ch-row-title">Modules & Libraries</div><div class="ch-row-meta">20 min · Textbook + Audio</div></div><div class="ch-row-arrow">›</div></div>
+  </div>
+  <div class="player-tabs">
+    <div class="ptab active" onclick="switchMobileTab(this,'m-textbook')">Textbook</div>
+    <div class="ptab" onclick="switchMobileTab(this,'m-chapters')">Chapters</div>
+    <div class="ptab" onclick="switchMobileTab(this,'m-study')">Study</div>
+    <div class="ptab" onclick="switchMobileTab(this,'m-podcast')">Podcast</div>
+  </div>
+  <div class="mpane active" id="m-textbook">
+    <div class="textbook-content">
+      <div class="ch-label-m" id="m-ch-label">Chapter 1 — Introduction to Python</div>
+      <div class="ch-text" id="m-ch-text">
+        <h2>Introduction to Python</h2>
+        <p>Python is a <span class="hl">high-level, interpreted programming language</span> known for its clear syntax and readability.</p>
+        <p>Its design philosophy emphasizes code readability. Python is <span class="hl">dynamically typed</span> and <span class="hl">garbage-collected</span>.</p>
+        <h2>Why Python?</h2>
+        <p>Python is widely used in web development, data science, AI, and automation. Its simplicity makes it excellent for beginners while its power makes it indispensable to professionals.</p>
       </div>
     </div>
-    <div class="tab-pane" id="pane-study">
-      <div class="asset-scroll">
-        <div class="asset-section"><div class="asset-section-label">Study Materials</div>
-          <div class="asset-row"><div class="asset-ico">📄</div><div class="asset-info"><div class="asset-name">Ch.1 Study Guide</div><div class="asset-meta">PDF · NotebookLM</div></div></div>
-          <div class="asset-row"><div class="asset-ico">✅</div><div class="asset-info"><div class="asset-name">Ch.1 Quiz Prep</div><div class="asset-meta">PDF · NotebookLM</div></div></div>
-        </div>
-        <div class="asset-section"><div class="asset-section-label">Charts & Maps</div>
-          <div class="asset-row"><div class="asset-ico">📊</div><div class="asset-info"><div class="asset-name">Python Ecosystem Map</div><div class="asset-meta">PNG · Charts folder</div></div></div>
-        </div>
-      </div>
+  </div>
+  <div class="mpane" id="m-chapters">
+    <div class="m-chapter-scroll">
+      <div class="m-ch-row active" onclick="mobilePickChapter(this,1,'Introduction to Python','12 min')"><div class="m-ch-badge">01</div><div class="ch-row-info"><div class="ch-row-title">Introduction to Python</div><div class="ch-row-meta">12 min</div></div></div>
+      <div class="m-ch-row" onclick="mobilePickChapter(this,2,'Variables & Data Types','18 min')"><div class="m-ch-badge">02</div><div class="ch-row-info"><div class="ch-row-title">Variables & Data Types</div><div class="ch-row-meta">18 min</div></div></div>
+      <div class="m-ch-row" onclick="mobilePickChapter(this,3,'Control Flow','22 min')"><div class="m-ch-badge">03</div><div class="ch-row-info"><div class="ch-row-title">Control Flow</div><div class="ch-row-meta">22 min</div></div></div>
+      <div class="m-ch-row" onclick="mobilePickChapter(this,4,'Functions','25 min')"><div class="m-ch-badge">04</div><div class="ch-row-info"><div class="ch-row-title">Functions</div><div class="ch-row-meta">25 min</div></div></div>
+      <div class="m-ch-row" onclick="mobilePickChapter(this,5,'Modules & Libraries','20 min')"><div class="m-ch-badge">05</div><div class="ch-row-info"><div class="ch-row-title">Modules & Libraries</div><div class="ch-row-meta">20 min</div></div></div>
     </div>
-    <div class="tab-pane" id="pane-podcast">
-      <div class="asset-scroll">
-        <div class="asset-section"><div class="asset-section-label">NotebookLM Episodes</div>
-          <div class="asset-row" onclick="loadPodcast(1)"><div class="asset-ico">🎙</div><div class="asset-info"><div class="asset-name">Ch.1 Deep Dive</div><div class="asset-meta">MP3 · 35:22 · NotebookLM</div></div></div>
-          <div class="asset-row" onclick="loadPodcast(2)"><div class="asset-ico">🎙</div><div class="asset-info"><div class="asset-name">Ch.2 Deep Dive</div><div class="asset-meta">MP3 · 42:10 · NotebookLM</div></div></div>
-          <div class="asset-row" onclick="loadPodcast(3)"><div class="asset-ico">🎙</div><div class="asset-info"><div class="asset-name">Ch.3 Deep Dive</div><div class="asset-meta">MP3 · 38:45 · NotebookLM</div></div></div>
-        </div>
-      </div>
+  </div>
+  <div class="mpane" id="m-study">
+    <div class="asset-scroll"><div class="asset-section"><div class="asset-section-label">Study Materials</div>
+      <div class="asset-row"><div class="asset-ico">📄</div><div class="asset-info"><div class="asset-name">Ch.1 Study Guide</div><div class="asset-meta">PDF · NotebookLM</div></div></div>
+      <div class="asset-row"><div class="asset-ico">✅</div><div class="asset-info"><div class="asset-name">Ch.1 Quiz Prep</div><div class="asset-meta">PDF · NotebookLM</div></div></div>
+    </div></div>
+  </div>
+  <div class="mpane" id="m-podcast">
+    <div class="asset-scroll"><div class="asset-section"><div class="asset-section-label">NotebookLM Episodes</div>
+      <div class="asset-row"><div class="asset-ico">🎙</div><div class="asset-info"><div class="asset-name">Ch.1 Deep Dive</div><div class="asset-meta">MP3 · 35:22</div></div></div>
+      <div class="asset-row"><div class="asset-ico">🎙</div><div class="asset-info"><div class="asset-name">Ch.2 Deep Dive</div><div class="asset-meta">MP3 · 42:10</div></div></div>
+    </div></div>
+  </div>
+  <div class="mobile-player-bar">
+    <div class="now-playing">
+      <div class="np-icon" id="m-np-icon">📖</div>
+      <div class="np-info"><div class="np-title" id="m-np-title">Ch.1 — Introduction to Python</div><div class="np-type" id="m-np-type">Textbook Audio · Gemini TTS</div></div>
     </div>
-  </div><!-- /player-left -->
-
-  <!-- RIGHT: player controls -->
-  <div class="player-right">
-    <div class="player-bar">
-      <div class="now-playing">
-        <div class="np-icon" id="np-icon">📖</div>
-        <div class="np-info">
-          <div class="np-title" id="np-title">Ch.1 — Introduction to Python</div>
-          <div class="np-type" id="np-type">Textbook Audio · Gemini TTS</div>
-        </div>
-      </div>
-      <div class="progress-wrap">
-        <div class="progress-bar" onclick="scrub(event,this)"><div class="progress-fill" id="prog-fill"></div></div>
-        <div class="time-row"><span class="time-txt" id="t-cur">0:00</span><span class="time-txt" id="t-tot">12:00</span></div>
-      </div>
-      <div class="controls">
-        <button class="ctrl" onclick="skip(-15)">⏮</button>
-        <button class="ctrl" onclick="skip(-15)">⏪</button>
-        <button class="ctrl play" id="play-btn" onclick="togglePlay()">▶</button>
-        <button class="ctrl" onclick="skip(15)">⏩</button>
-        <button class="ctrl" onclick="skip(15)">⏭</button>
-      </div>
+    <div class="progress-wrap">
+      <div class="progress-bar" onclick="scrub(event,this)"><div class="progress-fill" id="m-prog-fill"></div></div>
+      <div class="time-row"><span class="time-txt" id="m-t-cur">0:00</span><span class="time-txt" id="m-t-tot">12:00</span></div>
     </div>
-    <div class="voice-row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--border)">
-      <span style="font-size:10px;font-family:monospace;color:var(--text3)">VOICE</span>
-      <select id="voice-select" style="background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:4px 10px;color:var(--text2);font-size:11px;font-family:monospace;outline:none;cursor:pointer;flex:1">
+    <div class="controls">
+      <button class="ctrl" onclick="skip(-15)">⏪</button>
+      <button class="ctrl play" id="m-play-btn" onclick="togglePlay()">▶</button>
+      <button class="ctrl" onclick="skip(15)">⏩</button>
+    </div>
+    <div class="voice-row" style="margin-top:10px">
+      <span class="voice-label">VOICE</span>
+      <select id="m-voice-select" class="voice-select">
         <option value="Aoede">Aoede — Conversational</option>
         <option value="Charon">Charon — Neutral</option>
         <option value="Fenrir">Fenrir — Expressive</option>
         <option value="Kore">Kore — Clear</option>
         <option value="Puck">Puck — Friendly</option>
       </select>
-      <div id="tts-status" style="font-size:10px;font-family:monospace;color:var(--purple3);display:none">● reading...</div>
     </div>
-  </div><!-- /player-right -->
-
-</div><!-- /player-body -->
-</div>
-
-<!-- TUTOR -->
-<div class="view" id="tutor-view">
-<div class="topbar">
-<div class="owl" onclick="showView('player-view')">‹</div>
-<div class="course-info">
-<div class="course-title">AI Tutor</div>
-<div class="chapter-sub">Groq · Llama 3.3 70B</div>
-</div>
-<div class="topbar-actions">
-<div class="icon-btn" onclick="clearChat()" title="Clear chat">🗑</div>
-</div>
-</div>
-<div class="tutor-context">
-<div class="ctx-label">Context:</div>
-<div class="ctx-badge" id="ctx-badge">Ch.1 — Introduction to Python</div>
-</div>
-<div class="tutor-msgs" id="tutor-msgs">
-<div class="tutor-welcome">
-<div class="tutor-welcome-icon">🧠</div>
-<div class="tutor-welcome-title">Your AI Tutor</div>
-<div class="tutor-welcome-sub">Ask me anything about what you're studying. I have full context of your current chapter.</div>
-<div class="quick-prompts">
-<div class="qp" onclick="quickSend('Explain the key concepts from this chapter simply')">Explain key concepts</div>
-<div class="qp" onclick="quickSend('Quiz me on this chapter')">Quiz me</div>
-<div class="qp" onclick="quickSend('Give me 3 real world examples of what I just learned')">Real world examples</div>
-<div class="qp" onclick="quickSend('Summarize what I just read in 5 bullet points')">Summarize</div>
-<div class="qp" onclick="quickSend('What should I focus on most in this chapter?')">What to focus on</div>
-<div class="qp" onclick="quickSend('How does this connect to what comes next?')">What comes next</div>
-</div>
-</div>
-</div>
-<div class="tutor-bar">
-<button class="t-btn mic" id="mic-btn" onclick="toggleMic()">🎤</button>
-<textarea class="t-input" id="t-input" placeholder="Ask anything..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-<button class="t-btn send" onclick="sendMsg()">↑</button>
-</div>
+  </div>
 </div>
 
 <script>
 const GROQ='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';
 const GEMINI='AIzaSyAdSjlRfdjopIntl6jM70OHkarqO-UtAzA';
+
 let course={id:'CRSE-001',name:'Python Basics',icon:'🐍'};
 let chapter={num:1,title:'Introduction to Python',duration:'12 min'};
 let playing=false,progress=0,ticker=null;
-let history=[];
+let chatHistory=[];
 let rec=null;
+let ttsAudio=null,ttsPlaying=false;
+const isMobile=()=>window.innerWidth<768;
+
 const content={
-1:{title:'Introduction to Python',text:`<h2>Introduction to Python</h2><p>Python is a <span class="hl">high-level, interpreted programming language</span> known for its clear syntax and readability. Created by Guido van Rossum and first released in 1991, Python has become one of the most widely used languages in the world.</p><p>Its design philosophy emphasizes code readability with significant indentation. Python is <span class="hl">dynamically typed</span> and <span class="hl">garbage-collected</span>, supporting structured, object-oriented, and functional programming.</p><h2>Why Python?</h2><p>Python is widely used in web development, data science, artificial intelligence, scientific computing, and automation. Its simplicity makes it excellent for beginners while its power makes it indispensable to professionals.</p><h2>Getting Started</h2><p>Python code is written in plain text files with a <span class="hl">.py extension</span>. The interpreter reads and executes your code line by line, making it easy to test and debug.</p>`},
-2:{title:'Variables & Data Types',text:`<h2>Variables & Data Types</h2><p>In Python, <span class="hl">variables are created when you assign a value</span> to them. Python uses dynamic typing — you don't need to declare a variable's type explicitly.</p><p>Python has several built-in data types: <span class="hl">integers, floats, strings, booleans, lists, tuples, sets, and dictionaries</span>. Each serves a different purpose.</p><h2>Type Conversion</h2><p>Python allows you to convert between types using functions like <span class="hl">int(), float(), str(), and list()</span>. This is called type casting and is essential for data manipulation.</p>`},
-3:{title:'Control Flow',text:`<h2>Control Flow</h2><p><span class="hl">Control flow</span> determines the order in which your program's code executes. Python uses indentation to define blocks, making the structure visually clear.</p><p>The main tools are <span class="hl">if/elif/else statements</span> for decisions, and <span class="hl">for/while loops</span> for repetition. Mastering these is fundamental to programming.</p>`},
-4:{title:'Functions',text:`<h2>Functions</h2><p>Functions are <span class="hl">reusable blocks of code</span> that perform a specific task. In Python, you define a function using the <span class="hl">def keyword</span> followed by the name and parameters.</p><p>Functions support <span class="hl">default parameters, *args, and **kwargs</span> for flexible argument handling. They can return values using the return statement.</p>`},
-5:{title:'Modules & Libraries',text:`<h2>Modules & Libraries</h2><p>Python's <span class="hl">module system</span> allows you to organize code into separate files and reuse it across projects. You import modules using the import statement.</p><p>The <span class="hl">Python Package Index (PyPI)</span> hosts hundreds of thousands of third-party packages. Tools like pip make it easy to install and manage them.</p>`}
+1:{title:'Introduction to Python',text:`<h2>Introduction to Python</h2><p>Python is a <span class="hl">high-level, interpreted programming language</span> known for its clear syntax and readability. Created by Guido van Rossum and first released in 1991, Python has become one of the most widely used languages in the world.</p><p>Its design philosophy emphasizes code readability with significant indentation. Python is <span class="hl">dynamically typed</span> and <span class="hl">garbage-collected</span>, supporting structured, object-oriented, and functional programming.</p><h2>Why Python?</h2><p>Python is widely used in web development, data science, artificial intelligence, scientific computing, and automation. Its simplicity makes it excellent for beginners while its power makes it indispensable to professionals.</p><p>The <span class="hl">Python Package Index (PyPI)</span> hosts hundreds of thousands of third-party modules that extend Python's capabilities far beyond its standard library.</p><h2>Getting Started</h2><p>Python code is written in plain text files with a <span class="hl">.py extension</span>. The interpreter reads and executes your code line by line, making it easy to test and debug.</p>`},
+2:{title:'Variables & Data Types',text:`<h2>Variables & Data Types</h2><p>In Python, <span class="hl">variables are created when you assign a value</span> to them. Python uses dynamic typing — you don't need to declare a variable's type explicitly.</p><p>Python has several built-in data types: <span class="hl">integers, floats, strings, booleans, lists, tuples, sets, and dictionaries</span>. Each serves a different purpose.</p><h2>Type Conversion</h2><p>Python allows you to convert between types using functions like <span class="hl">int(), float(), str(), and list()</span>. This is called type casting.</p>`},
+3:{title:'Control Flow',text:`<h2>Control Flow</h2><p><span class="hl">Control flow</span> determines the order in which your program's code executes. Python uses indentation to define blocks.</p><p>The main tools are <span class="hl">if/elif/else statements</span> for decisions, and <span class="hl">for/while loops</span> for repetition.</p>`},
+4:{title:'Functions',text:`<h2>Functions</h2><p>Functions are <span class="hl">reusable blocks of code</span> that perform a specific task. In Python, you define a function using the <span class="hl">def keyword</span>.</p><p>Functions support <span class="hl">default parameters, *args, and **kwargs</span> for flexible argument handling.</p>`},
+5:{title:'Modules & Libraries',text:`<h2>Modules & Libraries</h2><p>Python's <span class="hl">module system</span> allows you to organize code into separate files and reuse it across projects.</p><p>The <span class="hl">Python Package Index (PyPI)</span> hosts hundreds of thousands of third-party packages.</p>`}
 };
 
-// Mobile: player-body stacks vertically. Desktop: side by side via CSS.
-// No JS needed — pure CSS media queries handle it.
+// ── INIT: show correct layout based on screen size
+function init(){
+  if(isMobile()){
+    document.getElementById('desktop-app').style.display='none';
+    document.getElementById('mobile-browser').style.display='flex';
+  } else {
+    document.getElementById('desktop-app').style.display='flex';
+    document.getElementById('mobile-browser').style.display='none';
+    document.getElementById('mobile-player').style.display='none';
+  }
+}
+window.addEventListener('resize',init);
+init();
 
-function showView(id){
-document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-document.getElementById(id).classList.add('active');
+// ── DESKTOP: tab switching
+function switchTopTab(el,name){
+  document.querySelectorAll('.ttab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('pane-'+name).classList.add('active');
 }
-function loadCourse(id,name,desc,icon){
-course={id,name,icon};
-setChapter(1,'Introduction to Python','12 min');
-showView('player-view');
+
+// ── DESKTOP: select course
+function selectCourse(el,id,name,icon,chNum,chTitle){
+  document.querySelectorAll('.course-item').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  course={id,name,icon};
+  setChapter(chNum,chTitle,'12 min');
 }
-function switchTab(el,name){
-document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('active'));
-document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
-el.classList.add('active');
-document.getElementById('pane-'+name).classList.add('active');
-}
+
+// ── DESKTOP: pick chapter
 function pickChapter(el,num,title,dur){
-document.querySelectorAll('.ch-row').forEach(r=>r.classList.remove('active'));
-el.classList.add('active');
-setChapter(num,title,dur);
-document.querySelectorAll('.ptab')[0].click();
+  document.querySelectorAll('.ch-row').forEach(r=>r.classList.remove('active'));
+  el.classList.add('active');
+  setChapter(num,title,dur);
 }
+
 function setChapter(num,title,dur){
-chapter={num,title,duration:dur};
-const c=content[num]||content[1];
-document.getElementById('p-title').textContent=course.name;
-document.getElementById('p-sub').textContent=`CH-0${num} // ${title}`;
-document.getElementById('ch-label').textContent=`Chapter ${num} — ${title}`;
-document.getElementById('ch-text').innerHTML=c.text;
-document.getElementById('np-title').textContent=`Ch.${num} — ${title}`;
-document.getElementById('np-type').textContent='📖 Textbook Audio · Gemini TTS';
-document.getElementById('np-icon').textContent='📖';
-document.getElementById('ctx-badge').textContent=`Ch.${num} — ${title}`;
-progress=0;
-document.getElementById('prog-fill').style.width='0%';
-document.getElementById('t-cur').textContent='0:00';
-if(playing){playing=false;clearInterval(ticker);document.getElementById('play-btn').textContent='▶';}
+  chapter={num,title,duration:dur};
+  const c=content[num]||content[1];
+  // Desktop
+  document.getElementById('d-course-title').textContent=course.name;
+  document.getElementById('d-chapter-sub').textContent=`${course.id} // CH-0${num} // ${title}`;
+  document.getElementById('d-ch-label').textContent=`Chapter ${num} — ${title}`;
+  document.getElementById('d-ch-title').textContent=`Course Viewer — ${course.id} // Chapter ${num}`;
+  document.getElementById('d-ch-text').innerHTML=c.text;
+  document.getElementById('np-title').textContent=`Ch.${num} — ${title}`;
+  document.getElementById('np-type').textContent='Textbook Audio · Gemini TTS';
+  document.getElementById('np-icon').textContent='📖';
+  document.getElementById('ctx-badge').textContent=`Ch.${num} — ${title}`;
+  // Mobile
+  if(document.getElementById('m-title')){
+    document.getElementById('m-title').textContent=course.name;
+    document.getElementById('m-sub').textContent=`CH-0${num} // ${title}`;
+    document.getElementById('m-ch-label').textContent=`Chapter ${num} — ${title}`;
+    document.getElementById('m-ch-text').innerHTML=c.text;
+    document.getElementById('m-np-title').textContent=`Ch.${num} — ${title}`;
+    document.getElementById('m-np-icon').textContent='📖';
+  }
+  resetPlayer();
 }
-let ttsAudio=null;
-let ttsPlaying=false;
+
+function resetPlayer(){
+  progress=0;
+  ['prog-fill','m-prog-fill'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.width='0%';});
+  ['t-cur','m-t-cur'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='0:00';});
+  if(ttsPlaying){ttsAudio&&ttsAudio.pause();ttsPlaying=false;}
+  ['play-btn','m-play-btn'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='▶';});
+  clearInterval(ticker);
+}
+
+// ── MOBILE: navigation
+function showMobileView(id){
+  document.querySelectorAll('.mobile-view').forEach(v=>v.style.display='none');
+  const el=document.getElementById(id);
+  if(el)el.style.display='flex';
+}
+function mobileLoadCourse(id,name,icon){
+  course={id,name,icon};
+  setChapter(1,'Introduction to Python','12 min');
+  showMobileView('mobile-player');
+}
+function switchMobileTab(el,paneId){
+  document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.mpane').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(paneId).classList.add('active');
+}
+function mobilePickChapter(el,num,title,dur){
+  document.querySelectorAll('.m-ch-row').forEach(r=>r.classList.remove('active'));
+  el.classList.add('active');
+  setChapter(num,title,dur);
+  document.querySelectorAll('.ptab')[0].click();
+}
+
+// ── TUTOR
+function showTutor(){document.getElementById('tutor-view').classList.add('active');}
+function hideTutor(){document.getElementById('tutor-view').classList.remove('active');}
+
+// ── TTS
 function togglePlay(){
-if(ttsPlaying){
-if(ttsAudio){ttsAudio.pause();ttsPlaying=false;}
-playing=false;clearInterval(ticker);
-document.getElementById('play-btn').textContent='▶';
-document.getElementById('tts-status').style.display='none';
-}else{startGeminiTTS();}
+  if(ttsPlaying){
+    ttsAudio&&ttsAudio.pause();ttsPlaying=false;
+    clearInterval(ticker);
+    ['play-btn','m-play-btn'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='▶';});
+    const s=document.getElementById('tts-status');if(s)s.style.display='none';
+  } else {startGeminiTTS();}
 }
-function pcmToWav(pcmData,sampleRate=24000,channels=1,bitDepth=16){
-const dataSize=pcmData.length;
-const buffer=new ArrayBuffer(44+dataSize);
-const view=new DataView(buffer);
-const writeStr=(off,str)=>{for(let i=0;i<str.length;i++)view.setUint8(off+i,str.charCodeAt(i));};
-writeStr(0,'RIFF');view.setUint32(4,36+dataSize,true);writeStr(8,'WAVE');
-writeStr(12,'fmt ');view.setUint32(16,16,true);view.setUint16(20,1,true);
-view.setUint16(22,channels,true);view.setUint32(24,sampleRate,true);
-view.setUint32(28,sampleRate*channels*(bitDepth/8),true);
-view.setUint16(32,channels*(bitDepth/8),true);view.setUint16(34,bitDepth,true);
-writeStr(36,'data');view.setUint32(40,dataSize,true);
-new Uint8Array(buffer,44).set(pcmData);
-return buffer;
+
+function pcmToWav(pcmData,sr=24000,ch=1,bd=16){
+  const ds=pcmData.length;const buf=new ArrayBuffer(44+ds);const v=new DataView(buf);
+  const w=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));};
+  w(0,'RIFF');v.setUint32(4,36+ds,true);w(8,'WAVE');w(12,'fmt ');
+  v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,ch,true);
+  v.setUint32(24,sr,true);v.setUint32(28,sr*ch*(bd/8),true);
+  v.setUint16(32,ch*(bd/8),true);v.setUint16(34,bd,true);
+  w(36,'data');v.setUint32(40,ds,true);new Uint8Array(buf,44).set(pcmData);
+  return buf;
 }
+
 async function startGeminiTTS(){
-const btn=document.getElementById('play-btn');
-const status=document.getElementById('tts-status');
-btn.textContent='⏳';status.style.display='block';
-const voice=document.getElementById('voice-select').value;
-const chText=content[chapter.num]?.text.replace(/<[^>]*>/g,'')||'Chapter content loading...';
-const truncated='Please read the following chapter content aloud in a clear, natural voice: '+chText.slice(0,3500);
-try{
-const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${GEMINI}`,{
-method:'POST',headers:{'Content-Type':'application/json'},
-body:JSON.stringify({contents:[{role:'user',parts:[{text:truncated}]}],generationConfig:{responseModalities:['AUDIO'],speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:voice}}}}})
-});
-const data=await res.json();
-if(data.error){throw new Error(data.error.message);}
-const inlineData=data?.candidates?.[0]?.content?.parts?.[0]?.inlineData;
-if(!inlineData?.data){throw new Error('No audio in response');}
-const binary=atob(inlineData.data);
-const pcm=new Uint8Array(binary.length);
-for(let i=0;i<binary.length;i++)pcm[i]=binary.charCodeAt(i);
-const wavBuffer=pcmToWav(pcm,24000,1,16);
-const blob=new Blob([wavBuffer],{type:'audio/wav'});
-const url=URL.createObjectURL(blob);
-if(ttsAudio){ttsAudio.pause();URL.revokeObjectURL(ttsAudio.src);}
-ttsAudio=new Audio(url);
-ttsAudio.onplay=()=>{ttsPlaying=true;btn.textContent='⏸';startProgressTicker(ttsAudio);};
-ttsAudio.onended=()=>{ttsPlaying=false;playing=false;btn.textContent='▶';progress=100;status.style.display='none';clearInterval(ticker);};
-ttsAudio.onerror=()=>{ttsPlaying=false;btn.textContent='▶';status.style.display='none';alert('Audio playback error.');};
-ttsAudio.play();
-}catch(e){btn.textContent='▶';status.style.display='none';console.error(e);alert('Gemini TTS error: '+e.message);}
+  const voice=(document.getElementById('voice-select')||document.getElementById('m-voice-select')).value;
+  const chText=content[chapter.num]?.text.replace(/<[^>]*>/g,'')||'';
+  const prompt='Please read the following chapter content aloud in a clear, natural voice: '+chText.slice(0,3500);
+  ['play-btn','m-play-btn'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='⏳';});
+  const st=document.getElementById('tts-status');if(st)st.style.display='block';
+  try{
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${GEMINI}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseModalities:['AUDIO'],speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:voice}}}}})
+    });
+    const data=await res.json();
+    if(data.error)throw new Error(data.error.message);
+    const id=data?.candidates?.[0]?.content?.parts?.[0]?.inlineData;
+    if(!id?.data)throw new Error('No audio');
+    const bin=atob(id.data);const pcm=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++)pcm[i]=bin.charCodeAt(i);
+    const wav=pcmToWav(pcm);const blob=new Blob([wav],{type:'audio/wav'});
+    const url=URL.createObjectURL(blob);
+    if(ttsAudio){ttsAudio.pause();URL.revokeObjectURL(ttsAudio.src);}
+    ttsAudio=new Audio(url);
+    ttsAudio.onplay=()=>{ttsPlaying=true;['play-btn','m-play-btn'].forEach(i=>{const e=document.getElementById(i);if(e)e.textContent='⏸';});startTicker();};
+    ttsAudio.onended=()=>{ttsPlaying=false;['play-btn','m-play-btn'].forEach(i=>{const e=document.getElementById(i);if(e)e.textContent='▶';});if(st)st.style.display='none';clearInterval(ticker);};
+    ttsAudio.onerror=()=>{ttsPlaying=false;['play-btn','m-play-btn'].forEach(i=>{const e=document.getElementById(i);if(e)e.textContent='▶';});if(st)st.style.display='none';};
+    ttsAudio.play();
+  }catch(e){
+    ['play-btn','m-play-btn'].forEach(i=>{const el=document.getElementById(i);if(el)el.textContent='▶';});
+    if(st)st.style.display='none';
+    alert('TTS error: '+e.message);
+  }
 }
-function startProgressTicker(audio){
-clearInterval(ticker);
-ticker=setInterval(()=>{
-if(!audio.duration||isNaN(audio.duration))return;
-progress=(audio.currentTime/audio.duration)*100;
-document.getElementById('prog-fill').style.width=progress+'%';
-const s=Math.floor(audio.currentTime);
-document.getElementById('t-cur').textContent=Math.floor(s/60)+':'+(s%60).toString().padStart(2,'0');
-const tot=Math.floor(audio.duration);
-document.getElementById('t-tot').textContent=Math.floor(tot/60)+':'+(tot%60).toString().padStart(2,'0');
-},200);
+
+function startTicker(){
+  clearInterval(ticker);
+  ticker=setInterval(()=>{
+    if(!ttsAudio||isNaN(ttsAudio.duration))return;
+    const pct=(ttsAudio.currentTime/ttsAudio.duration)*100;
+    ['prog-fill','m-prog-fill'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.width=pct+'%';});
+    const s=Math.floor(ttsAudio.currentTime);const ts=Math.floor(s/60)+':'+(s%60).toString().padStart(2,'0');
+    ['t-cur','m-t-cur'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=ts;});
+    const tot=Math.floor(ttsAudio.duration);const tt=Math.floor(tot/60)+':'+(tot%60).toString().padStart(2,'0');
+    ['t-tot','m-t-tot'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=tt;});
+  },200);
 }
+
 function skip(s){
-if(ttsAudio&&!isNaN(ttsAudio.duration)){ttsAudio.currentTime=Math.max(0,Math.min(ttsAudio.duration,ttsAudio.currentTime+s));}
-else{const tot=720;const cur=(progress/100)*tot;const nw=Math.max(0,Math.min(tot,cur+s));progress=(nw/tot)*100;document.getElementById('prog-fill').style.width=progress+'%';document.getElementById('t-cur').textContent=Math.floor(nw/60)+':'+(nw%60).toString().padStart(2,'0');}
+  if(ttsAudio&&!isNaN(ttsAudio.duration)){ttsAudio.currentTime=Math.max(0,Math.min(ttsAudio.duration,ttsAudio.currentTime+s));}
 }
 function scrub(e,bar){
-const r=bar.getBoundingClientRect();
-const pct=Math.max(0,Math.min(100,((e.clientX-r.left)/r.width)*100));
-if(ttsAudio&&!isNaN(ttsAudio.duration)){ttsAudio.currentTime=(pct/100)*ttsAudio.duration;}
-progress=pct;document.getElementById('prog-fill').style.width=progress+'%';
+  const r=bar.getBoundingClientRect();
+  const pct=Math.max(0,Math.min(100,((e.clientX-r.left)/r.width)*100));
+  if(ttsAudio&&!isNaN(ttsAudio.duration))ttsAudio.currentTime=(pct/100)*ttsAudio.duration;
 }
 function loadPodcast(num){
-document.getElementById('np-icon').textContent='🎙';
-document.getElementById('np-title').textContent=`Ch.${num} NotebookLM Podcast`;
-document.getElementById('np-type').textContent='🎙 NotebookLM Deep Dive';
-progress=0;document.getElementById('prog-fill').style.width='0%';
+  document.getElementById('np-icon').textContent='🎙';
+  document.getElementById('np-title').textContent=`Ch.${num} NotebookLM Podcast`;
+  document.getElementById('np-type').textContent='NotebookLM Deep Dive';
 }
+
+// ── TUTOR CHAT
 function quickSend(txt){document.getElementById('t-input').value=txt;sendMsg();}
 function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,100)+'px';}
 function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}}
 async function sendMsg(){
-const inp=document.getElementById('t-input');
-const txt=inp.value.trim();
-if(!txt)return;
-inp.value='';inp.style.height='auto';
-addMsg(txt,'user');
-const thinking=addMsg('Thinking...','ai thinking');
-const ctx=content[chapter.num]?.text.replace(/<[^>]*>/g,'')||'';
-const sys=`You are a friendly, conversational AI tutor. The student is studying "${chapter.title}" from the course "${course.name}".\n\nCurrent chapter content:\n${ctx}\n\nBe concise and conversational. Use simple language and real examples. Keep responses under 120 words unless asked for more. If quizzing, ask one question at a time.`;
-try{
-const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
-method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${GROQ}`},
-body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'system',content:sys},...history,{role:'user',content:txt}],max_tokens:250,temperature:0.7})
-});
-const data=await res.json();
-const reply=data.choices?.[0]?.message?.content||'Sorry, I had trouble responding. Try again.';
-thinking.classList.remove('thinking');thinking.textContent=reply;
-history.push({role:'user',content:txt},{role:'assistant',content:reply});
-if(history.length>20)history=history.slice(-20);
-speak(reply);
-}catch(e){thinking.textContent='Connection error. Check internet and try again.';thinking.classList.remove('thinking');}
-scrollBottom();
+  const inp=document.getElementById('t-input');const txt=inp.value.trim();if(!txt)return;
+  inp.value='';inp.style.height='auto';
+  addMsg(txt,'user');const thinking=addMsg('Thinking...','ai thinking');
+  const ctx=content[chapter.num]?.text.replace(/<[^>]*>/g,'')||'';
+  const sys=`You are a friendly AI tutor. The student is studying "${chapter.title}" from "${course.name}".\n\nChapter content:\n${ctx}\n\nBe concise. Under 120 words unless asked for more.`;
+  try{
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${GROQ}`},
+      body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'system',content:sys},...chatHistory,{role:'user',content:txt}],max_tokens:250,temperature:0.7})
+    });
+    const data=await res.json();
+    const reply=data.choices?.[0]?.message?.content||'Sorry, try again.';
+    thinking.classList.remove('thinking');thinking.textContent=reply;
+    chatHistory.push({role:'user',content:txt},{role:'assistant',content:reply});
+    if(chatHistory.length>20)chatHistory=chatHistory.slice(-20);
+    speak(reply);
+  }catch(e){thinking.textContent='Connection error.';thinking.classList.remove('thinking');}
+  scrollBottom();
 }
-function addMsg(txt,cls){const msgs=document.getElementById('tutor-msgs');const d=document.createElement('div');d.className='msg '+cls;d.textContent=txt;msgs.appendChild(d);scrollBottom();return d;}
+function addMsg(txt,cls){
+  const msgs=document.getElementById('tutor-msgs');
+  const d=document.createElement('div');d.className='msg '+cls;d.textContent=txt;
+  msgs.appendChild(d);scrollBottom();return d;
+}
 function scrollBottom(){const m=document.getElementById('tutor-msgs');m.scrollTop=m.scrollHeight;}
 function clearChat(){
-history=[];
-const msgs=document.getElementById('tutor-msgs');
-msgs.innerHTML=`<div class="tutor-welcome"><div class="tutor-welcome-icon">🧠</div><div class="tutor-welcome-title">Chat cleared</div><div class="tutor-welcome-sub">Ready for a fresh conversation about ${chapter.title}.</div></div>`;
+  chatHistory=[];
+  document.getElementById('tutor-msgs').innerHTML=`<div class="tutor-welcome"><div class="tutor-welcome-icon">🧠</div><div class="tutor-welcome-title">Chat cleared</div><div class="tutor-welcome-sub">Ready for ${chapter.title}.</div></div>`;
 }
 function speak(txt){
-if(!window.speechSynthesis)return;
-window.speechSynthesis.cancel();
-const u=new SpeechSynthesisUtterance(txt);
-const voices=window.speechSynthesis.getVoices();
-const v=voices.find(v=>v.name.includes('Samantha')||v.name.includes('Karen')||v.name.includes('Moira')||v.name.includes('Google US'));
-if(v)u.voice=v;
-u.rate=1.05;window.speechSynthesis.speak(u);
+  if(!window.speechSynthesis)return;window.speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(txt);
+  const v=window.speechSynthesis.getVoices().find(v=>v.name.includes('Samantha')||v.name.includes('Karen')||v.name.includes('Google US'));
+  if(v)u.voice=v;u.rate=1.05;window.speechSynthesis.speak(u);
 }
 function toggleMic(){
-const btn=document.getElementById('mic-btn');
-if(!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)){alert('Voice input needs Chrome or Safari.');return;}
-if(!rec){
-const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-rec=new SR();rec.continuous=false;rec.interimResults=false;rec.lang='en-US';
-rec.onresult=e=>{document.getElementById('t-input').value=e.results[0][0].transcript;btn.classList.remove('on');btn.textContent='🎤';sendMsg();};
-rec.onerror=rec.onend=()=>{btn.classList.remove('on');btn.textContent='🎤';};
-}
-if(btn.classList.contains('on')){rec.stop();btn.classList.remove('on');btn.textContent='🎤';}
-else{rec.start();btn.classList.add('on');btn.textContent='🔴';}
+  const btn=document.getElementById('mic-btn');
+  if(!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)){alert('Voice needs Chrome or Safari.');return;}
+  if(!rec){
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;rec=new SR();
+    rec.continuous=false;rec.interimResults=false;rec.lang='en-US';
+    rec.onresult=e=>{document.getElementById('t-input').value=e.results[0][0].transcript;btn.classList.remove('on');btn.textContent='🎤';sendMsg();};
+    rec.onerror=rec.onend=()=>{btn.classList.remove('on');btn.textContent='🎤';};
+  }
+  if(btn.classList.contains('on')){rec.stop();btn.classList.remove('on');btn.textContent='🎤';}
+  else{rec.start();btn.classList.add('on');btn.textContent='🔴';}
 }
 window.speechSynthesis&&window.speechSynthesis.getVoices();
 </script>
