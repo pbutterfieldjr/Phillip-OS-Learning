@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Quick Note</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --black: #0a0a0a;
+    --panel: #141414;
+    --panel-2: #1a1a1a;
+    --line: #262626;
+    --gold: #d4af37;
+    --gold-dim: #8a7226;
+    --text: #f2f2ef;
+    --text-dim: #8a8a86;
+    --danger: #b5493f;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--black);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    background-image:
+      radial-gradient(circle at 10% 10%, #d4af3706 0%, transparent 40%),
+      radial-gradient(circle at 90% 90%, #d4af3705 0%, transparent 40%);
+  }
+
+  .app {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 28px 20px 60px;
+    min-height: 100%;
+  }
+
+  .header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .header h1 {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 18px;
+    color: var(--gold);
+  }
+
+  .header .date {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .tab {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-size: 12px;
+    color: var(--text-dim);
+    background: transparent;
+    border: none;
+    padding: 10px 16px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    position: relative;
+    top: 1px;
+  }
+
+  .tab.active {
+    color: var(--gold);
+    border-bottom: 2px solid var(--gold);
+  }
+
+  .tab .badge {
+    display: inline-block;
+    background: var(--gold-dim);
+    color: var(--black);
+    border-radius: 10px;
+    font-size: 10px;
+    padding: 1px 6px;
+    margin-left: 6px;
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+  }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* Notes tab */
+  textarea#notesArea {
+    width: 100%;
+    min-height: 60vh;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 18px;
+    resize: vertical;
+    outline: none;
+  }
+  textarea#notesArea:focus { border-color: var(--gold-dim); }
+
+  .save-hint {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 8px;
+    text-align: right;
+  }
+
+  /* Call form */
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .card::before { content: none; }
+
+  .form-title {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-size: 12px;
+    color: var(--gold);
+    margin-bottom: 14px;
+  }
+
+  .row { display: flex; gap: 12px; margin-bottom: 12px; }
+  .row .field { flex: 1; }
+
+  .field label {
+    display: block;
+    font-family: 'Oswald', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+
+  input[type=text], input[type=tel], input[type=date], input[type=time], textarea.field-input {
+    width: 100%;
+    background: #1c1c1c;
+    border: 1px solid #2e2e2e;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    padding: 9px 10px;
+    border-radius: 3px;
+    outline: none;
+  }
+  input:focus, textarea.field-input:focus { border-color: var(--gold-dim); }
+
+  textarea.field-input { min-height: 70px; resize: vertical; }
+
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .checkbox-row input { accent-color: var(--gold); width: 15px; height: 15px; }
+  .checkbox-row label { font-size: 12px; color: var(--text-dim); text-transform: none; letter-spacing: normal; }
+
+  button {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 12px;
+    border: 1px solid #333;
+    background: transparent;
+    color: var(--text);
+    padding: 10px 16px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  button:hover { border-color: var(--gold-dim); color: var(--gold); }
+
+  button.primary {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--black);
+  }
+  button.primary:hover { background: #e0bd48; border-color: #e0bd48; color: var(--black); }
+
+  button.small { padding: 6px 12px; font-size: 11px; }
+
+  button.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* Call log entries */
+  .entry {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--gold);
+    border-radius: 4px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+  }
+
+  .entry-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+
+  .entry-name {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+  }
+
+  .entry-time {
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .entry-line {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+  .entry-line strong { color: var(--text); font-weight: 500; }
+
+  .entry-msg {
+    font-size: 13px;
+    margin: 10px 0;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+
+  .entry-action {
+    font-size: 12px;
+    background: #d4af3712;
+    border: 1px solid var(--gold-dim);
+    color: var(--gold);
+    padding: 6px 10px;
+    border-radius: 3px;
+    margin-bottom: 10px;
+    display: inline-block;
+  }
+
+  .entry-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .empty-state {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 13px;
+    padding: 40px 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <h1>Quick Note</h1>
+    <div class="date" id="headerDate"></div>
+  </div>
+
+  <div style="display:flex; gap:8px; margin-bottom:8px;">
+    <button class="small" id="exportBtn">Export Backup</button>
+    <button class="small" id="importBtn">Import Backup</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none;">
+  </div>
+  <div id="autoBackupNote" style="display:none; font-size:11px; color:var(--text-dim); margin-bottom:16px;"></div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="notes">Notes</button>
+    <button class="tab" data-tab="calls">Calls <span class="badge" id="callBadge">0</span></button>
+    <button class="tab" data-tab="todos">To-Do <span class="badge" id="todoBadge">0</span></button>
+  </div>
+
+  <div id="storageWarning" style="display:none; background:#b5493f22; border:1px solid #b5493f; color:#e0a89f; font-size:12px; padding:10px 14px; border-radius:4px; margin-bottom:16px;"></div>
+
+  <div class="panel active" id="panel-notes">
+    <textarea id="notesArea" placeholder="Brain dump, running notes for today..."></textarea>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+      <button class="small" id="copyNotesBtn">Copy Notes</button>
+      <div class="save-hint" id="saveHint" style="margin-top:0;">saved</div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-calls">
+    <div class="card">
+      <div class="form-title">Log a Call</div>
+      <div class="row">
+        <div class="field">
+          <label for="callerName">Caller Name</label>
+          <input type="text" id="callerName" placeholder="Jane Doe">
+        </div>
+        <div class="field">
+          <label for="callerNumber">Callback Number</label>
+          <input type="tel" id="callerNumber" placeholder="(555) 555-5555">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="callDate">Date</label>
+          <input type="date" id="callDate">
+        </div>
+        <div class="field">
+          <label for="callTime">Time</label>
+          <input type="time" id="callTime">
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:12px;">
+        <label for="callMessage">Message</label>
+        <textarea class="field-input" id="callMessage" placeholder="What they need..."></textarea>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="hasAction">
+        <label for="hasAction">Has an action item</label>
+      </div>
+      <div class="field" id="actionField" style="display:none; margin-bottom:14px;">
+        <label for="actionText">Action item</label>
+        <input type="text" id="actionText" placeholder="Call back with pricing by Friday">
+      </div>
+      <button class="primary" id="addCallBtn">Add Call</button>
+    </div>
+
+    <div id="callList"></div>
+  </div>
+
+  <div class="panel" id="panel-todos">
+    <div class="card">
+      <div class="form-title">Add a To-Do</div>
+      <div class="row">
+        <div class="field">
+          <input type="text" id="todoInput" placeholder="Follow up with Jane on pricing">
+        </div>
+      </div>
+      <button class="primary" id="addTodoBtn">Add</button>
+      <div class="save-hint" id="todoSaveHint" style="text-align:left; margin-top:8px;"></div>
+    </div>
+    <div id="todoList"></div>
+  </div>
+</div>
+
+<script>
+  function todayKey() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function todayDisplay() {
+    return new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  }
+  function nowTimeStr() {
+    const d = new Date();
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+
+  const storageWarning = document.getElementById('storageWarning');
+  if (!window.storage || typeof window.storage.set !== 'function') {
+    storageWarning.style.display = 'block';
+    storageWarning.textContent = 'Running standalone — local browser save is unavailable outside the Claude artifact panel. Notes will sync to your Google Doc instead.';
+  }
+
+  const dateKey = todayKey();
+  const notesKey = 'notes-' + dateKey;
+  const callsKey = 'calls-' + dateKey;
+
+  // Google Doc sync — mirrors the Notes textarea to a Google Doc via Apps Script web app.
+  // Blocked when run as a Claude artifact (sandboxed); works when this file is opened
+  // directly in a browser or hosted yourself.
+  const GOOGLE_DOC_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbwyi8tSKxCrquO_A6r_ygxbKJyOavIAqKdY4a0JgU55MAt_mWMw_lxSBQS6xx44bd_PJw/exec';
+
+  function syncNotesToGoogleDoc(text) {
+    if (!GOOGLE_DOC_WEBHOOK_URL) return Promise.resolve();
+    // no-cors + text/plain avoids a CORS preflight, which this Apps Script web app doesn't handle.
+    // The response is opaque (fire-and-forget) — this only rejects on a hard network failure.
+    return fetch(GOOGLE_DOC_WEBHOOK_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: text
+    });
+  }
+
+  async function storageSetWithRetry(key, value, attempts = 3) {
+    let lastErr = null;
+    for (let i = 0; i < attempts; i++) {
+      try {
+        const result = await window.storage.set(key, value, false);
+        if (result) return result;
+        lastErr = new Error('storage.set returned empty result');
+      } catch (e) {
+        lastErr = e;
+      }
+      await new Promise(r => setTimeout(r, 300 * (i + 1)));
+    }
+    throw lastErr;
+  }
+
+  document.getElementById('headerDate').textContent = todayDisplay();
+
+  // ---------- Tabs ----------
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  // ---------- Notes ----------
+  const notesArea = document.getElementById('notesArea');
+  const saveHint = document.getElementById('saveHint');
+  let notesSaveTimer = null;
+
+  async function loadNotes() {
+    try {
+      const res = await window.storage.get(notesKey, false);
+      notesArea.value = res ? res.value : '';
+    } catch (e) {
+      notesArea.value = '';
+    }
+  }
+
+  notesArea.addEventListener('input', () => {
+    saveHint.textContent = 'syncing...';
+    clearTimeout(notesSaveTimer);
+    notesSaveTimer = setTimeout(async () => {
+      let localOk = false;
+      if (window.storage) {
+        try {
+          await storageSetWithRetry(notesKey, notesArea.value);
+          localOk = true;
+        } catch (e) {
+          console.error('Local save failed:', e);
+        }
+      }
+      try {
+        await syncNotesToGoogleDoc(notesArea.value);
+        saveHint.textContent = localOk ? 'saved + synced to Doc' : 'synced to Doc';
+      } catch (e) {
+        console.error('Google Doc sync failed:', e);
+        saveHint.textContent = localOk
+          ? 'saved locally (Doc sync failed — check your connection)'
+          : 'sync failed — use Copy Notes to back up manually';
+      }
+    }, 500);
+  });
+
+  document.getElementById('copyNotesBtn').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    try {
+      await navigator.clipboard.writeText(notesArea.value);
+      btn.textContent = 'Copied';
+    } catch (err) {
+      btn.textContent = 'Copy failed';
+    }
+    setTimeout(() => { btn.textContent = 'Copy Notes'; }, 2000);
+  });
+
+  // ---------- Calls ----------
+  const callDate = document.getElementById('callDate');
+  const callTime = document.getElementById('callTime');
+  const hasAction = document.getElementById('hasAction');
+  const actionField = document.getElementById('actionField');
+  const callList = document.getElementById('callList');
+  const callBadge = document.getElementById('callBadge');
+
+  callDate.value = dateKey;
+  callTime.value = nowTimeStr();
+
+  hasAction.addEventListener('change', () => {
+    actionField.style.display = hasAction.checked ? 'block' : 'none';
+  });
+
+  let calls = [];
+
+  async function loadCalls() {
+    try {
+      const res = await window.storage.get(callsKey, false);
+      calls = res ? JSON.parse(res.value) : [];
+    } catch (e) {
+      calls = [];
+    }
+    renderCalls();
+  }
+
+  async function saveCalls() {
+    try {
+      await storageSetWithRetry(callsKey, JSON.stringify(calls));
+    } catch (e) {
+      console.error('Calls save failed:', e);
+      alert('Could not save this call entry: ' + (e && e.message ? e.message : 'unknown error') + '\n\nCheck the browser console for details, and let me know the exact message.');
+    }
+  }
+
+  function fmtTimeDisplay(t) {
+    const [h, m] = t.split(':').map(Number);
+    const period = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return `${h12}:${String(m).padStart(2,'0')} ${period}`;
+  }
+
+  function renderCalls() {
+    callBadge.textContent = calls.length;
+    if (calls.length === 0) {
+      callList.innerHTML = '<div class="empty-state">No calls logged today.</div>';
+      return;
+    }
+    callList.innerHTML = '';
+    // most recent first
+    [...calls].reverse().forEach((c) => {
+      const idx = calls.indexOf(c);
+      const div = document.createElement('div');
+      div.className = 'entry';
+      div.innerHTML = `
+        <div class="entry-top">
+          <div class="entry-name">${escapeHtml(c.name || '(no name)')}</div>
+          <div class="entry-time">${fmtTimeDisplay(c.time)} · ${c.date}</div>
+        </div>
+        <div class="entry-line"><strong>Callback:</strong> ${escapeHtml(c.number || '—')}</div>
+        ${c.message ? `<div class="entry-msg">${escapeHtml(c.message)}</div>` : ''}
+        ${c.action ? `<div class="entry-action">Action: ${escapeHtml(c.action)}</div>` : ''}
+        <div class="entry-actions">
+          <button class="small" data-action="email" data-idx="${idx}">Email via Outlook</button>
+          <button class="small" data-action="copy" data-idx="${idx}">Copy Details</button>
+          ${c.action ? `<button class="small" data-action="todoist" data-idx="${idx}">Add to Todoist</button>` : ''}
+          <button class="small danger" data-action="delete" data-idx="${idx}">Delete</button>
+        </div>
+      `;
+      callList.appendChild(div);
+    });
+  }
+
+  function escapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  document.getElementById('addCallBtn').addEventListener('click', async () => {
+    const name = document.getElementById('callerName').value.trim();
+    const number = document.getElementById('callerNumber').value.trim();
+    const date = callDate.value || dateKey;
+    const time = callTime.value || nowTimeStr();
+    const message = document.getElementById('callMessage').value.trim();
+    const action = hasAction.checked ? document.getElementById('actionText').value.trim() : '';
+
+    if (!name && !number && !message && !action) return;
+
+    calls.push({ name, number, date, time, message, action });
+    await saveCalls();
+    renderCalls();
+
+    document.getElementById('callerName').value = '';
+    document.getElementById('callerNumber').value = '';
+    document.getElementById('callMessage').value = '';
+    document.getElementById('actionText').value = '';
+    hasAction.checked = false;
+    actionField.style.display = 'none';
+    callDate.value = todayKey();
+    callTime.value = nowTimeStr();
+  });
+
+  callList.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const idx = parseInt(btn.dataset.idx);
+    const c = calls[idx];
+    if (!c) return;
+    const action = btn.dataset.action;
+
+    if (action === 'delete') {
+      calls.splice(idx, 1);
+      await saveCalls();
+      renderCalls();
+    } else if (action === 'email') {
+      const bodyText = `Caller: ${c.name || ''}\nCallback #: ${c.number || ''}\nDate: ${c.date}\nTime: ${fmtTimeDisplay(c.time)}\n\nMessage:\n${c.message || ''}` +
+        (c.action ? `\n\nAction item: ${c.action}` : '');
+      const subject = encodeURIComponent(`Message from ${c.name || 'caller'}`);
+      const body = encodeURIComponent(bodyText);
+      // Outlook Web compose deep link — opens a draft in whatever Outlook account is signed in, in the browser
+      const outlookUrl = `https://outlook.office.com/mail/deeplink/compose?subject=${subject}&body=${body}`;
+      const opened = window.open(outlookUrl, '_blank');
+      if (!opened) {
+        try {
+          await navigator.clipboard.writeText(bodyText);
+          btn.textContent = 'Blocked — copied instead';
+        } catch (err) {
+          btn.textContent = 'Could not open Outlook or copy';
+        }
+        setTimeout(() => { btn.textContent = 'Email via Outlook'; }, 2500);
+      }
+    } else if (action === 'copy') {
+      const bodyText = `Caller: ${c.name || ''}\nCallback #: ${c.number || ''}\nDate: ${c.date}\nTime: ${fmtTimeDisplay(c.time)}\n\nMessage:\n${c.message || ''}` +
+        (c.action ? `\n\nAction item: ${c.action}` : '');
+      try {
+        await navigator.clipboard.writeText(bodyText);
+        btn.textContent = 'Copied';
+      } catch (err) {
+        btn.textContent = 'Copy failed';
+      }
+      setTimeout(() => { btn.textContent = 'Copy Details'; }, 2000);
+    } else if (action === 'todoist') {
+      const details = [c.name, c.number].filter(Boolean).join(', ');
+      const content = encodeURIComponent(`${c.action}${details ? ' (re: ' + details + ')' : ''}`);
+      window.open(`https://todoist.com/add?content=${content}`, '_blank');
+    }
+  });
+
+  // ---------- To-Do (sent straight to Todoist Inbox — local list is just today's session log) ----------
+  const todoInput = document.getElementById('todoInput');
+  const todoList = document.getElementById('todoList');
+  const todoBadge = document.getElementById('todoBadge');
+  let todos = [];
+
+  function renderTodos() {
+    todoBadge.textContent = todos.length;
+    if (todos.length === 0) {
+      todoList.innerHTML = '<div class="empty-state">Nothing sent to Todoist yet today.</div>';
+      return;
+    }
+    todoList.innerHTML = '';
+    todos.forEach((t, idx) => {
+      const div = document.createElement('div');
+      div.className = 'entry';
+      div.innerHTML = `
+        <div class="checkbox-row" style="margin-bottom:0;">
+          <label style="flex:1;">${escapeHtml(t.text)}</label>
+          <button class="small danger" data-action="delete-todo" data-idx="${idx}">Remove from log</button>
+        </div>
+      `;
+      todoList.appendChild(div);
+    });
+  }
+
+  function sendToTodoistInbox(text) {
+    window.open(`https://todoist.com/add?content=${encodeURIComponent(text)}`, '_blank');
+  }
+
+  document.getElementById('addTodoBtn').addEventListener('click', () => {
+    const text = todoInput.value.trim();
+    if (!text) return;
+    sendToTodoistInbox(text);
+    todos.push({ text });
+    renderTodos();
+    todoInput.value = '';
+    const hint = document.getElementById('todoSaveHint');
+    if (hint) { hint.textContent = 'sent to Todoist inbox'; hint.style.color = 'var(--text-dim)'; }
+  });
+
+  todoInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('addTodoBtn').click();
+  });
+
+  todoList.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-action="delete-todo"]');
+    if (btn) {
+      const idx = parseInt(btn.dataset.idx);
+      todos.splice(idx, 1);
+      renderTodos();
+    }
+  });
+
+  // ---------- Export / Import ----------
+  function exportSnapshot(silent) {
+    const snapshot = {
+      exportedAt: new Date().toISOString(),
+      date: dateKey,
+      notes: notesArea.value,
+      calls: calls,
+      todos: todos
+    };
+    const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `quicknote-backup-${dateKey}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    if (silent) {
+      const el = document.getElementById('autoBackupNote');
+      if (el) {
+        el.textContent = 'Auto-backup downloaded at ' + new Date().toLocaleTimeString();
+        el.style.display = 'block';
+      }
+    }
+  }
+
+  document.getElementById('exportBtn').addEventListener('click', () => exportSnapshot(false));
+
+  // Auto-backup every 5 minutes as a safety net while built-in storage is unreliable
+  setInterval(() => exportSnapshot(true), 5 * 60 * 1000);
+
+  document.getElementById('importBtn').addEventListener('click', () => {
+    document.getElementById('importFile').click();
+  });
+
+  document.getElementById('importFile').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if (typeof data.notes === 'string') {
+        notesArea.value = data.notes;
+        try { await storageSetWithRetry(notesKey, notesArea.value); } catch (err) { console.error(err); }
+      }
+      if (Array.isArray(data.calls)) {
+        calls = data.calls;
+        renderCalls();
+        await saveCalls();
+      }
+      if (Array.isArray(data.todos)) {
+        todos = data.todos;
+        renderTodos();
+      }
+      alert('Import complete.');
+    } catch (err) {
+      console.error('Import failed:', err);
+      alert('Import failed: ' + (err && err.message ? err.message : 'invalid file'));
+    }
+    e.target.value = '';
+  });
+
+  loadNotes();
+  loadCalls();
+  renderTodos();
+</script>
+
+</body>
+</html>
