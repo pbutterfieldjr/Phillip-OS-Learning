@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Quick Note</title>
+<style>
+  :root {
+    --black: #0a0a0a;
+    --panel: #141414;
+    --line: #262626;
+    --gold: #d4af37;
+    --gold-dim: #8a7226;
+    --text: #f2f2ef;
+    --text-dim: #8a8a86;
+    --danger: #b5493f;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--black);
+    color: var(--text);
+    font-family: 'DM Mono', 'SF Mono', Menlo, Consolas, monospace;
+    background-image:
+      radial-gradient(circle at 10% 10%, #d4af3706 0%, transparent 40%),
+      radial-gradient(circle at 90% 90%, #d4af3705 0%, transparent 40%);
+  }
+
+  .app {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 28px 20px 60px;
+    min-height: 100%;
+  }
+
+  .header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .header h1 {
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 18px;
+    color: var(--gold);
+  }
+
+  .header .date {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .tab {
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-size: 12px;
+    color: var(--text-dim);
+    background: transparent;
+    border: none;
+    padding: 10px 16px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    position: relative;
+    top: 1px;
+  }
+
+  .tab.active {
+    color: var(--gold);
+    border-bottom: 2px solid var(--gold);
+  }
+
+  .tab .badge {
+    display: inline-block;
+    background: var(--gold-dim);
+    color: var(--black);
+    border-radius: 10px;
+    font-size: 10px;
+    padding: 1px 6px;
+    margin-left: 6px;
+    font-weight: 500;
+  }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  textarea#notesArea {
+    width: 100%;
+    min-height: 60vh;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 18px;
+    resize: vertical;
+    outline: none;
+  }
+  textarea#notesArea:focus { border-color: var(--gold-dim); }
+
+  .save-hint {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 8px;
+    text-align: right;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .form-title {
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-size: 12px;
+    color: var(--gold);
+    margin-bottom: 14px;
+  }
+
+  .row { display: flex; gap: 12px; margin-bottom: 12px; }
+  .row .field { flex: 1; }
+
+  .field label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+
+  input[type=text], input[type=tel], input[type=date], input[type=time], textarea.field-input {
+    width: 100%;
+    background: #1c1c1c;
+    border: 1px solid #2e2e2e;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    padding: 9px 10px;
+    border-radius: 3px;
+    outline: none;
+  }
+  input:focus, textarea.field-input:focus { border-color: var(--gold-dim); }
+
+  textarea.field-input { min-height: 70px; resize: vertical; }
+
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .checkbox-row input { accent-color: var(--gold); width: 15px; height: 15px; }
+  .checkbox-row label { font-size: 12px; color: var(--text-dim); text-transform: none; letter-spacing: normal; }
+
+  button {
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 12px;
+    border: 1px solid #333;
+    background: transparent;
+    color: var(--text);
+    padding: 10px 16px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  button:hover { border-color: var(--gold-dim); color: var(--gold); }
+
+  button.primary {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--black);
+  }
+  button.primary:hover { background: #e0bd48; border-color: #e0bd48; color: var(--black); }
+
+  button.small { padding: 6px 12px; font-size: 11px; }
+
+  button.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+  .entry {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--gold);
+    border-radius: 4px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+  }
+
+  .entry-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+
+  .entry-name {
+    font-weight: 600;
+    font-size: 15px;
+  }
+
+  .entry-time {
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .entry-line {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+  .entry-line strong { color: var(--text); font-weight: 500; }
+
+  .entry-msg {
+    font-size: 13px;
+    margin: 10px 0;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+
+  .entry-action {
+    font-size: 12px;
+    background: #d4af3712;
+    border: 1px solid var(--gold-dim);
+    color: var(--gold);
+    padding: 6px 10px;
+    border-radius: 3px;
+    margin-bottom: 10px;
+    display: inline-block;
+  }
+
+  .entry-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .empty-state {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 13px;
+    padding: 40px 0;
+  }
+
+  .status-line {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <h1>Quick Note</h1>
+    <div class="date" id="headerDate"></div>
+  </div>
+
+  <div style="display:flex; gap:8px; margin-bottom:8px;">
+    <button class="small" id="exportBtn">Export Backup</button>
+    <button class="small" id="importBtn">Import Backup</button>
+  </div>
+  <div class="status-line" id="statusLine"></div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="notes">Notes</button>
+    <button class="tab" data-tab="calls">Calls <span class="badge" id="callBadge">0</span></button>
+    <button class="tab" data-tab="todos">To-Do <span class="badge" id="todoBadge">0</span></button>
+  </div>
+
+  <div class="panel active" id="panel-notes">
+    <textarea id="notesArea" placeholder="Brain dump, running notes for today..."></textarea>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+      <button class="small" id="copyNotesBtn">Copy Notes</button>
+      <div class="save-hint" id="saveHint" style="margin-top:0;">saved</div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-calls">
+    <div class="card">
+      <div class="form-title">Log a Call</div>
+      <div class="row">
+        <div class="field">
+          <label for="callerName">Caller Name</label>
+          <input type="text" id="callerName" placeholder="Jane Doe">
+        </div>
+        <div class="field">
+          <label for="callerNumber">Callback Number</label>
+          <input type="tel" id="callerNumber" placeholder="(555) 555-5555">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="callDate">Date</label>
+          <input type="date" id="callDate">
+        </div>
+        <div class="field">
+          <label for="callTime">Time</label>
+          <input type="time" id="callTime">
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:12px;">
+        <label for="callMessage">Message</label>
+        <textarea class="field-input" id="callMessage" placeholder="What they need..."></textarea>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="hasAction">
+        <label for="hasAction">Has an action item</label>
+      </div>
+      <div class="field" id="actionField" style="display:none; margin-bottom:14px;">
+        <label for="actionText">Action item</label>
+        <input type="text" id="actionText" placeholder="Call back with pricing by Friday">
+      </div>
+      <button class="primary" id="addCallBtn">Add Call</button>
+    </div>
+
+    <div id="callList"></div>
+  </div>
+
+  <div class="panel" id="panel-todos">
+    <div class="card">
+      <div class="form-title">Add a To-Do</div>
+      <div class="row">
+        <div class="field">
+          <input type="text" id="todoInput" placeholder="Follow up with Jane on pricing">
+        </div>
+      </div>
+      <button class="primary" id="addTodoBtn">Add</button>
+      <div class="save-hint" id="todoSaveHint" style="text-align:left; margin-top:8px;"></div>
+    </div>
+    <div id="todoList"></div>
+  </div>
+</div>
+
+<script src="renderer.js"></script>
+</body>
+</html>

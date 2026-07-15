@@ -1,11 +1,5 @@
 {
   "version": 2,
-  "builds": [
-    {"src": "index.html", "use": "@vercel/static"},
-    {"src": "quick-note.html", "use": "@vercel/static"}
-  ],
-  "routes": [
-    {"src": "/quick-note.html", "dest": "/quick-note.html"},
-    {"src": "/(.*)", "dest": "/index.html"}
-  ]
+  "builds": [{"src": "index.html", "use": "@vercel/static"}],
+  "routes": [{"src": "/(.*)", "dest": "/index.html"}]
 }
