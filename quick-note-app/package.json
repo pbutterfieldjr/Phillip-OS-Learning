@@ -1,7 +1,7 @@
 {
   "name": "quick-note",
   "version": "1.0.0",
-  "description": "Standalone desktop Quick Note app for daily notes, call logs, and to-dos.",
+  "description": "Phillip-OS Task Manager: notes, call logs, today's to-dos and reminders, a calendar, and countdowns.",
   "main": "main.js",
   "private": true,
   "scripts": {
@@ -14,7 +14,7 @@
   },
   "build": {
     "appId": "com.phillipos.quicknote",
-    "productName": "Quick Note",
+    "productName": "Phillip-OS Task Manager",
     "directories": {
       "output": "dist"
     },

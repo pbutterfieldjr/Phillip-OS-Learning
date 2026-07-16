@@ -6,12 +6,42 @@ const dataDir = app.getPath('userData');
 const dataFile = path.join(dataDir, 'quick-note-data.json');
 const backupFile = path.join(dataDir, 'quick-note-data.backup.json');
 
-function loadStore() {
-  try {
-    return JSON.parse(fs.readFileSync(dataFile, 'utf8'));
-  } catch (e) {
-    return {};
+const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+// v1 of this file was a flat { [dateKey]: { notes, calls, todos } } map.
+// v2 nests that under `days` and adds app-wide sections that aren't tied
+// to a single day. Old files get migrated in place on first load.
+function normalizeStore(raw) {
+  raw = raw || {};
+  let days = raw.days;
+  if (!days) {
+    days = {};
+    for (const k of Object.keys(raw)) {
+      if (DATE_KEY_PATTERN.test(k)) days[k] = raw[k];
+    }
   }
+  return {
+    days,
+    countdowns: Array.isArray(raw.countdowns) ? raw.countdowns : [],
+    events: Array.isArray(raw.events) ? raw.events : [],
+    reminders: Array.isArray(raw.reminders) ? raw.reminders : [],
+    pomodoro: raw.pomodoro && typeof raw.pomodoro === 'object'
+      ? {
+          workMin: Number(raw.pomodoro.workMin) || 25,
+          breakMin: Number(raw.pomodoro.breakMin) || 5
+        }
+      : { workMin: 25, breakMin: 5 }
+  };
+}
+
+function loadStore() {
+  let raw;
+  try {
+    raw = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
+  } catch (e) {
+    raw = {};
+  }
+  return normalizeStore(raw);
 }
 
 function saveStore(store) {
@@ -34,10 +64,11 @@ let mainWindow;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 820,
-    height: 920,
-    minWidth: 480,
-    minHeight: 600,
+    width: 900,
+    height: 960,
+    minWidth: 560,
+    minHeight: 640,
+    title: 'Phillip-OS Task Manager',
     backgroundColor: '#0a0a0a',
     autoHideMenuBar: true,
     webPreferences: {
@@ -70,8 +101,8 @@ ipcMain.handle('store:save', (event, store) => {
 
 ipcMain.handle('store:exportBackup', async (event, store) => {
   const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
-    title: 'Export Quick Note Backup',
-    defaultPath: `quicknote-backup-${new Date().toISOString().slice(0, 10)}.json`,
+    title: 'Export Phillip-OS Task Manager Backup',
+    defaultPath: `phillip-os-backup-${new Date().toISOString().slice(0, 10)}.json`,
     filters: [{ name: 'JSON', extensions: ['json'] }]
   });
   if (canceled || !filePath) return { canceled: true };
@@ -81,7 +112,7 @@ ipcMain.handle('store:exportBackup', async (event, store) => {
 
 ipcMain.handle('store:importBackup', async () => {
   const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
-    title: 'Import Quick Note Backup',
+    title: 'Import Backup',
     filters: [{ name: 'JSON', extensions: ['json'] }],
     properties: ['openFile']
   });
@@ -92,4 +123,8 @@ ipcMain.handle('store:importBackup', async () => {
 
 ipcMain.handle('shell:openExternal', (event, url) => {
   return shell.openExternal(url);
+});
+
+ipcMain.handle('shell:revealDataFile', () => {
+  shell.showItemInFolder(dataFile);
 });

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Quick Note</title>
+<title>Phillip-OS Task Manager</title>
 <style>
   :root {
     --black: #0a0a0a;
@@ -28,9 +28,9 @@
   }
 
   .app {
-    max-width: 720px;
+    max-width: 900px;
     margin: 0 auto;
-    padding: 28px 20px 60px;
+    padding: 24px 20px 60px;
     min-height: 100%;
   }
 
@@ -38,27 +38,96 @@
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    margin-bottom: 20px;
+    margin-bottom: 14px;
   }
 
   .header h1 {
     font-weight: 600;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
-    font-size: 18px;
+    font-size: 16px;
     color: var(--gold);
   }
 
+  .header-right {
+    text-align: right;
+  }
+
+  .clock {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.1;
+  }
+
   .header .date {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-dim);
   }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .toolbar-left { display: flex; gap: 8px; }
+
+  .pomodoro {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  .pomodoro input[type=number] {
+    width: 42px;
+    background: #1c1c1c;
+    border: 1px solid #2e2e2e;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 12px;
+    padding: 3px 4px;
+    border-radius: 3px;
+  }
+  .pomo-display {
+    font-size: 15px;
+    font-weight: 600;
+    min-width: 54px;
+    text-align: center;
+    color: var(--gold);
+  }
+  .pomo-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    min-width: 40px;
+  }
+
+  .status-line {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+  .status-line a.reveal-link {
+    color: var(--gold-dim);
+    text-decoration: none;
+  }
+  .status-line a.reveal-link:hover { color: var(--gold); text-decoration: underline; }
 
   .tabs {
     display: flex;
     gap: 4px;
     margin-bottom: 18px;
     border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
   }
 
   .tab {
@@ -69,7 +138,7 @@
     color: var(--text-dim);
     background: transparent;
     border: none;
-    padding: 10px 16px;
+    padding: 10px 14px;
     cursor: pointer;
     border-bottom: 2px solid transparent;
     position: relative;
@@ -97,7 +166,7 @@
 
   textarea#notesArea {
     width: 100%;
-    min-height: 60vh;
+    min-height: 55vh;
     background: var(--panel);
     border: 1px solid var(--line);
     border-radius: 4px;
@@ -133,6 +202,15 @@
     font-size: 12px;
     color: var(--gold);
     margin-bottom: 14px;
+  }
+
+  .section-title {
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin: 4px 0 12px;
   }
 
   .row { display: flex; gap: 12px; margin-bottom: 12px; }
@@ -262,10 +340,108 @@
     padding: 40px 0;
   }
 
-  .status-line {
-    font-size: 11px;
+  /* Countdowns */
+  .countdown-entry {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .countdown-days {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--gold);
+    min-width: 70px;
+    text-align: center;
+  }
+  .countdown-days .unit {
+    display: block;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
     color: var(--text-dim);
-    margin-bottom: 16px;
+  }
+  .countdown-info { flex: 1; }
+  .countdown-label { font-size: 15px; font-weight: 600; }
+  .countdown-date { font-size: 11px; color: var(--text-dim); }
+
+  /* Calendar */
+  .calendar-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .cal-nav { display: flex; align-items: center; gap: 8px; }
+  .cal-label { font-size: 13px; font-weight: 600; color: var(--gold); margin-left: 6px; }
+  .cal-views button.active { color: var(--gold); border-color: var(--gold-dim); }
+
+  .cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+    text-align: center;
+  }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .cal-cell {
+    background: var(--panel);
+    min-height: 84px;
+    padding: 6px;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .cal-cell:hover { background: var(--panel-2, #1a1a1a); }
+  .cal-cell.other-month { opacity: 0.35; }
+  .cal-cell.today .cal-daynum {
+    color: var(--black);
+    background: var(--gold);
+    border-radius: 50%;
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    text-align: center;
+    line-height: 18px;
+  }
+  .cal-daynum { color: var(--text-dim); margin-bottom: 4px; }
+  .cal-event {
+    background: #d4af3712;
+    border-left: 2px solid var(--gold);
+    color: var(--gold);
+    padding: 2px 4px;
+    margin-bottom: 2px;
+    border-radius: 2px;
+    font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .agenda-day {
+    margin-bottom: 18px;
+  }
+  .agenda-day-header {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 8px;
+    letter-spacing: 0.04em;
   }
 </style>
 </head>
@@ -273,20 +449,35 @@
 
 <div class="app">
   <div class="header">
-    <h1>Quick Note</h1>
-    <div class="date" id="headerDate"></div>
+    <h1>Phillip-OS Task Manager</h1>
+    <div class="header-right">
+      <div class="clock" id="clock"></div>
+      <div class="date" id="headerDate"></div>
+    </div>
   </div>
 
-  <div style="display:flex; gap:8px; margin-bottom:8px;">
-    <button class="small" id="exportBtn">Export Backup</button>
-    <button class="small" id="importBtn">Import Backup</button>
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <button class="small" id="exportBtn">Export Backup</button>
+      <button class="small" id="importBtn">Import Backup</button>
+    </div>
+    <div class="pomodoro" id="pomodoro">
+      <input type="number" id="pomoWork" value="25" min="1" max="180" title="Work minutes">m /
+      <input type="number" id="pomoBreak" value="5" min="1" max="60" title="Break minutes">m
+      <span class="pomo-label" id="pomoLabel">Work</span>
+      <span class="pomo-display" id="pomoDisplay">25:00</span>
+      <button class="small" id="pomoStart">Start</button>
+      <button class="small" id="pomoReset">Reset</button>
+    </div>
   </div>
-  <div class="status-line" id="statusLine"></div>
+  <div class="status-line" id="statusLine"><span id="statusText">Loading...</span> <a href="#" id="revealFileLink" class="reveal-link">(show file)</a></div>
 
   <div class="tabs">
     <button class="tab active" data-tab="notes">Notes</button>
     <button class="tab" data-tab="calls">Calls <span class="badge" id="callBadge">0</span></button>
-    <button class="tab" data-tab="todos">To-Do <span class="badge" id="todoBadge">0</span></button>
+    <button class="tab" data-tab="todos">Today <span class="badge" id="todoBadge">0</span></button>
+    <button class="tab" data-tab="calendar">Calendar</button>
+    <button class="tab" data-tab="countdowns">Countdowns <span class="badge" id="countdownBadge">0</span></button>
   </div>
 
   <div class="panel active" id="panel-notes">
@@ -339,6 +530,22 @@
   </div>
 
   <div class="panel" id="panel-todos">
+    <div class="section-title" id="todayLabel"></div>
+
+    <div class="card">
+      <div class="form-title">Set a Reminder (today)</div>
+      <div class="row">
+        <div class="field">
+          <input type="text" id="reminderText" placeholder="Call the vet back">
+        </div>
+        <div class="field" style="flex: 0 0 130px;">
+          <input type="time" id="reminderTime">
+        </div>
+      </div>
+      <button class="primary" id="addReminderBtn">Set Reminder</button>
+    </div>
+    <div id="reminderList"></div>
+
     <div class="card">
       <div class="form-title">Add a To-Do</div>
       <div class="row">
@@ -350,6 +557,71 @@
       <div class="save-hint" id="todoSaveHint" style="text-align:left; margin-top:8px;"></div>
     </div>
     <div id="todoList"></div>
+  </div>
+
+  <div class="panel" id="panel-calendar">
+    <div class="card">
+      <div class="form-title">Add Event</div>
+      <div class="row">
+        <div class="field">
+          <label for="eventTitle">Title</label>
+          <input type="text" id="eventTitle" placeholder="Dentist appointment">
+        </div>
+        <div class="field">
+          <label for="eventDate">Date</label>
+          <input type="date" id="eventDate">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="eventStart">Start Time</label>
+          <input type="time" id="eventStart">
+        </div>
+        <div class="field">
+          <label for="eventEnd">End Time</label>
+          <input type="time" id="eventEnd">
+        </div>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="eventAllDay">
+        <label for="eventAllDay">All day</label>
+      </div>
+      <button class="primary" id="addEventBtn">Add Event</button>
+    </div>
+
+    <div class="calendar-toolbar">
+      <div class="cal-nav">
+        <button class="small" id="calPrev">&lsaquo;</button>
+        <button class="small" id="calToday">Today</button>
+        <button class="small" id="calNext">&rsaquo;</button>
+        <span id="calLabel" class="cal-label"></span>
+      </div>
+      <div class="cal-views">
+        <button class="small view-btn active" data-view="day">Day</button>
+        <button class="small view-btn" data-view="week">Week</button>
+        <button class="small view-btn" data-view="month">Month</button>
+      </div>
+    </div>
+    <div id="calendarBody"></div>
+    <div class="status-line" style="margin-top:14px;">Showing events created in this app only — Google/Outlook/Todoist calendars aren't connected yet.</div>
+  </div>
+
+  <div class="panel" id="panel-countdowns">
+    <div class="card">
+      <div class="form-title">Add a Countdown</div>
+      <div class="row">
+        <div class="field">
+          <label for="countdownLabel">Label</label>
+          <input type="text" id="countdownLabel" placeholder="Anniversary">
+        </div>
+        <div class="field">
+          <label for="countdownDate">Target Date</label>
+          <input type="date" id="countdownDate">
+        </div>
+      </div>
+      <button class="primary" id="addCountdownBtn">Add Countdown</button>
+    </div>
+    <div id="countdownList"></div>
   </div>
 </div>
 
