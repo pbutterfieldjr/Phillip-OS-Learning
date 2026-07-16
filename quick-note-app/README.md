@@ -47,3 +47,28 @@ Note: this was built and syntax-checked in a sandboxed container without
 GUI access or unrestricted network access, so the Electron binary itself
 could not be downloaded or the window launched there — test `npm start`
 locally before relying on it.
+
+## Troubleshooting: "Electron failed to install correctly"
+
+If `npm start` throws this on macOS, it means Electron's installer
+downloaded its zip but the `extract-zip` library it uses failed to fully
+extract it — specifically it can drop `Electron Framework.framework`
+because that bundle is full of macOS-style symlinks, which that library
+doesn't always handle correctly. Symptoms: `npm start` first complains
+about a missing `path.txt`, and after that's fixed, launching crashes
+with `dyld: Library not loaded: @rpath/Electron Framework.framework/...`.
+
+Fix — re-extract the already-downloaded zip with macOS's own `ditto`
+(which handles the symlinks correctly) instead of the JS extractor:
+
+```bash
+rm -rf node_modules/electron/dist
+ditto -xk ~/Library/Caches/electron/*/electron-v*.zip node_modules/electron/dist
+echo -n "Electron.app/Contents/MacOS/Electron" > node_modules/electron/path.txt
+npm start
+```
+
+(Adjust the zip filename glob if you have more than one cached version.)
+If `node_modules/electron/dist` and the cached zip under
+`~/Library/Caches/electron/` don't already exist, run `npm install` once
+first so the zip gets downloaded.
