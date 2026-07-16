@@ -6,5 +6,6 @@ contextBridge.exposeInMainWorld('quickNote', {
   save: (store) => ipcRenderer.invoke('store:save', store),
   exportBackup: (store) => ipcRenderer.invoke('store:exportBackup', store),
   importBackup: () => ipcRenderer.invoke('store:importBackup'),
-  openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url)
+  openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url),
+  revealDataFile: () => ipcRenderer.invoke('shell:revealDataFile')
 });
