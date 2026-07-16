@@ -1,7 +1,11 @@
-# Phillip-OS Task Manager
+# Phillip-OS Task Manager (desktop)
 
 A standalone Electron desktop app. Quick Note (daily notes, call log, and
-today's to-dos) is now one tab among several:
+today's to-dos) is now one tab among several. There's also a zero-install
+browser version, `phillip-os-web.html`, one level up from this folder —
+same features and UI, just backed by browser local storage instead of a
+real file, for when you can't (or don't want to) install Node.js/Electron
+on a machine.
 
 - **Notes** — the original quick note, autosaved as you type
 - **Calls** — call log with Outlook/Todoist quick actions

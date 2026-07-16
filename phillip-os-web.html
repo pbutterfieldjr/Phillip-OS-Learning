@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<!--
+  Phillip-OS Task Manager — zero-install browser version.
+
+  Same UI/features as the Electron app in quick-note-app/, but storage is
+  the browser's localStorage instead of a real file, so there's no Node.js
+  or npm install needed anywhere — just open this file.
+
+  Caveats:
+  - Data is scoped to one browser on one machine. Use Export/Import
+    (JSON file) to move it to another computer or browser profile.
+  - Prefer Chrome or Edge over Safari for this file: Safari treats each
+    local (file://) HTML file as having no persistent storage, so notes
+    can silently fail to survive a reload there. Chrome/Edge persist
+    localStorage for local files normally.
+  - Desktop notifications (Pomodoro/reminders) need you to allow the
+    permission prompt the first time, and only fire while this tab is open.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Phillip-OS Task Manager</title>
+<style>
+  :root {
+    --black: #0a0a0a;
+    --panel: #141414;
+    --line: #262626;
+    --gold: #d4af37;
+    --gold-dim: #8a7226;
+    --text: #f2f2ef;
+    --text-dim: #8a8a86;
+    --danger: #b5493f;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--black);
+    color: var(--text);
+    font-family: 'DM Mono', 'SF Mono', Menlo, Consolas, monospace;
+    background-image:
+      radial-gradient(circle at 10% 10%, #d4af3706 0%, transparent 40%),
+      radial-gradient(circle at 90% 90%, #d4af3705 0%, transparent 40%);
+  }
+
+  .app {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px 20px 60px;
+    min-height: 100%;
+  }
+
+  .header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .header h1 {
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-size: 16px;
+    color: var(--gold);
+  }
+
+  .header-right {
+    text-align: right;
+  }
+
+  .clock {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.1;
+  }
+
+  .header .date {
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .toolbar-left { display: flex; gap: 8px; }
+
+  .pomodoro {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  .pomodoro input[type=number] {
+    width: 42px;
+    background: #1c1c1c;
+    border: 1px solid #2e2e2e;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 12px;
+    padding: 3px 4px;
+    border-radius: 3px;
+  }
+  .pomo-display {
+    font-size: 15px;
+    font-weight: 600;
+    min-width: 54px;
+    text-align: center;
+    color: var(--gold);
+  }
+  .pomo-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    min-width: 40px;
+  }
+
+  .status-line {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+  }
+
+  .tab {
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-size: 12px;
+    color: var(--text-dim);
+    background: transparent;
+    border: none;
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    position: relative;
+    top: 1px;
+  }
+
+  .tab.active {
+    color: var(--gold);
+    border-bottom: 2px solid var(--gold);
+  }
+
+  .tab .badge {
+    display: inline-block;
+    background: var(--gold-dim);
+    color: var(--black);
+    border-radius: 10px;
+    font-size: 10px;
+    padding: 1px 6px;
+    margin-left: 6px;
+    font-weight: 500;
+  }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  textarea#notesArea {
+    width: 100%;
+    min-height: 55vh;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 18px;
+    resize: vertical;
+    outline: none;
+  }
+  textarea#notesArea:focus { border-color: var(--gold-dim); }
+
+  .save-hint {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 8px;
+    text-align: right;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .form-title {
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-size: 12px;
+    color: var(--gold);
+    margin-bottom: 14px;
+  }
+
+  .section-title {
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin: 4px 0 12px;
+  }
+
+  .row { display: flex; gap: 12px; margin-bottom: 12px; }
+  .row .field { flex: 1; }
+
+  .field label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+
+  input[type=text], input[type=tel], input[type=date], input[type=time], select, textarea.field-input {
+    width: 100%;
+    background: #1c1c1c;
+    border: 1px solid #2e2e2e;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    padding: 9px 10px;
+    border-radius: 3px;
+    outline: none;
+  }
+  input:focus, select:focus, textarea.field-input:focus { border-color: var(--gold-dim); }
+
+  textarea.field-input { min-height: 70px; resize: vertical; }
+
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .checkbox-row input { accent-color: var(--gold); width: 15px; height: 15px; }
+  .checkbox-row label { font-size: 12px; color: var(--text-dim); text-transform: none; letter-spacing: normal; }
+
+  button {
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 12px;
+    border: 1px solid #333;
+    background: transparent;
+    color: var(--text);
+    padding: 10px 16px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  button:hover { border-color: var(--gold-dim); color: var(--gold); }
+
+  button.primary {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--black);
+  }
+  button.primary:hover { background: #e0bd48; border-color: #e0bd48; color: var(--black); }
+
+  button.small { padding: 6px 12px; font-size: 11px; }
+
+  button.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+  .entry {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--gold);
+    border-radius: 4px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+  }
+
+  .entry-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+
+  .entry-name {
+    font-weight: 600;
+    font-size: 15px;
+  }
+
+  .entry-time {
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .entry-line {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+  .entry-line strong { color: var(--text); font-weight: 500; }
+
+  .entry-msg {
+    font-size: 13px;
+    margin: 10px 0;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+
+  .entry-action {
+    font-size: 12px;
+    background: #d4af3712;
+    border: 1px solid var(--gold-dim);
+    color: var(--gold);
+    padding: 6px 10px;
+    border-radius: 3px;
+    margin-bottom: 10px;
+    display: inline-block;
+  }
+
+  .entry-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .empty-state {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 13px;
+    padding: 40px 0;
+  }
+
+  /* Countdowns */
+  .countdown-entry {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .countdown-days {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--gold);
+    min-width: 70px;
+    text-align: center;
+  }
+  .countdown-days .unit {
+    display: block;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .countdown-info { flex: 1; }
+  .countdown-label { font-size: 15px; font-weight: 600; }
+  .countdown-date { font-size: 11px; color: var(--text-dim); }
+  .countdown-sub { font-size: 12px; color: var(--gold-dim); margin-top: 2px; }
+
+  /* Compact dual-column forms (Calendar tab) */
+  .card.compact { padding: 14px 16px; }
+  .dual-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 640px) {
+    .dual-form { grid-template-columns: 1fr; }
+  }
+  .form-col .form-title { margin-bottom: 8px; }
+  .row.tight { gap: 8px; margin-bottom: 8px; }
+  .row.tight .field { margin-bottom: 0; }
+  .checkbox-row.tight { margin-bottom: 8px; }
+  .dual-form input, .dual-form select { padding: 6px 8px; font-size: 12px; }
+
+  /* Calendar */
+  .calendar-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .cal-nav { display: flex; align-items: center; gap: 8px; }
+  .cal-label { font-size: 13px; font-weight: 600; color: var(--gold); margin-left: 6px; }
+  .cal-views button.active { color: var(--gold); border-color: var(--gold-dim); }
+
+  .cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+    text-align: center;
+  }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .cal-cell {
+    background: var(--panel);
+    min-height: 84px;
+    padding: 6px;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .cal-cell:hover { background: #1a1a1a; }
+  .cal-cell.other-month { opacity: 0.35; }
+  .cal-cell.today .cal-daynum {
+    color: var(--black);
+    background: var(--gold);
+    border-radius: 50%;
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    text-align: center;
+    line-height: 18px;
+  }
+  .cal-daynum { color: var(--text-dim); margin-bottom: 4px; }
+  .cal-event {
+    background: #d4af3712;
+    border-left: 2px solid var(--gold);
+    color: var(--gold);
+    padding: 2px 4px;
+    margin-bottom: 2px;
+    border-radius: 2px;
+    font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .agenda-day {
+    margin-bottom: 18px;
+  }
+  .agenda-day-header {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 8px;
+    letter-spacing: 0.04em;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <h1>Phillip-OS Task Manager</h1>
+    <div class="header-right">
+      <div class="clock" id="clock"></div>
+      <div class="date" id="headerDate"></div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <button class="small" id="exportBtn">Export Backup</button>
+      <button class="small" id="importBtn">Import Backup</button>
+    </div>
+    <div class="pomodoro" id="pomodoro">
+      <input type="number" id="pomoWork" value="25" min="1" max="180" title="Work minutes">m /
+      <input type="number" id="pomoBreak" value="5" min="1" max="60" title="Break minutes">m
+      <span class="pomo-label" id="pomoLabel">Work</span>
+      <span class="pomo-display" id="pomoDisplay">25:00</span>
+      <button class="small" id="pomoStart">Start</button>
+      <button class="small" id="pomoReset">Reset</button>
+    </div>
+  </div>
+  <div class="status-line" id="statusLine"><span id="statusText">Loading...</span></div>
+  <div class="status-line" style="margin-top:-12px;">Web version — data lives in this browser's local storage on this machine only. Use Export/Import to move it to another computer or browser, and export often.</div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="notes">Notes</button>
+    <button class="tab" data-tab="calls">Calls <span class="badge" id="callBadge">0</span></button>
+    <button class="tab" data-tab="todos">Today <span class="badge" id="todoBadge">0</span></button>
+    <button class="tab" data-tab="calendar">Calendar</button>
+    <button class="tab" data-tab="countdowns">Countdowns <span class="badge" id="countdownBadge">0</span></button>
+  </div>
+
+  <div class="panel active" id="panel-notes">
+    <textarea id="notesArea" placeholder="Brain dump, running notes for today..."></textarea>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+      <button class="small" id="copyNotesBtn">Copy Notes</button>
+      <div class="save-hint" id="saveHint" style="margin-top:0;">saved</div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-calls">
+    <div class="card">
+      <div class="form-title">Log a Call</div>
+      <div class="row">
+        <div class="field">
+          <label for="callerName">Caller Name</label>
+          <input type="text" id="callerName" placeholder="Jane Doe">
+        </div>
+        <div class="field">
+          <label for="callerNumber">Callback Number</label>
+          <input type="tel" id="callerNumber" placeholder="(555) 555-5555">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="callDate">Date</label>
+          <input type="date" id="callDate">
+        </div>
+        <div class="field">
+          <label for="callTime">Time</label>
+          <input type="time" id="callTime">
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:12px;">
+        <label for="callMessage">Message</label>
+        <textarea class="field-input" id="callMessage" placeholder="What they need..."></textarea>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="hasAction">
+        <label for="hasAction">Has an action item</label>
+      </div>
+      <div class="field" id="actionField" style="display:none; margin-bottom:14px;">
+        <label for="actionText">Action item</label>
+        <input type="text" id="actionText" placeholder="Call back with pricing by Friday">
+      </div>
+      <button class="primary" id="addCallBtn">Add Call</button>
+    </div>
+
+    <div id="callList"></div>
+  </div>
+
+  <div class="panel" id="panel-todos">
+    <div class="section-title" id="todayLabel"></div>
+
+    <div class="section-title" style="margin-top:0;">Reminders today</div>
+    <div id="reminderList"></div>
+    <div class="status-line">Set new reminders from the Calendar tab (any date, not just today).</div>
+
+    <div class="card">
+      <div class="form-title">Add a To-Do</div>
+      <div class="row">
+        <div class="field">
+          <input type="text" id="todoInput" placeholder="Follow up with Jane on pricing">
+        </div>
+      </div>
+      <button class="primary" id="addTodoBtn">Add</button>
+      <div class="save-hint" id="todoSaveHint" style="text-align:left; margin-top:8px;"></div>
+    </div>
+    <div id="todoList"></div>
+  </div>
+
+  <div class="panel" id="panel-calendar">
+    <div class="card compact">
+      <div class="dual-form">
+        <div class="form-col">
+          <div class="form-title">Add Event</div>
+          <div class="row tight">
+            <div class="field"><input type="text" id="eventTitle" placeholder="Title"></div>
+          </div>
+          <div class="row tight">
+            <div class="field"><input type="date" id="eventDate"></div>
+            <div class="field" style="flex:0 0 88px;"><input type="time" id="eventStart"></div>
+            <div class="field" style="flex:0 0 88px;"><input type="time" id="eventEnd"></div>
+          </div>
+          <div class="checkbox-row tight">
+            <input type="checkbox" id="eventAllDay">
+            <label for="eventAllDay">All day</label>
+          </div>
+          <button class="primary small" id="addEventBtn">Add Event</button>
+        </div>
+        <div class="form-col">
+          <div class="form-title">Add Reminder</div>
+          <div class="row tight">
+            <div class="field"><input type="text" id="calReminderText" placeholder="Remind me to..."></div>
+          </div>
+          <div class="row tight">
+            <div class="field"><input type="date" id="calReminderDate"></div>
+            <div class="field" style="flex:0 0 88px;"><input type="time" id="calReminderTime"></div>
+          </div>
+          <button class="primary small" id="addCalReminderBtn">Set Reminder</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="calendar-toolbar">
+      <div class="cal-nav">
+        <button class="small" id="calPrev">&lsaquo;</button>
+        <button class="small" id="calToday">Today</button>
+        <button class="small" id="calNext">&rsaquo;</button>
+        <span id="calLabel" class="cal-label"></span>
+      </div>
+      <div class="cal-views">
+        <button class="small view-btn active" data-view="day">Day</button>
+        <button class="small view-btn" data-view="week">Week</button>
+        <button class="small view-btn" data-view="month">Month</button>
+      </div>
+    </div>
+    <div id="calendarBody"></div>
+    <div class="status-line" style="margin-top:14px;">Showing events created in this app only — Google/Outlook/Todoist calendars aren't connected yet.</div>
+  </div>
+
+  <div class="panel" id="panel-countdowns">
+    <div class="card">
+      <div class="form-title">Add a Countdown</div>
+      <div class="row">
+        <div class="field">
+          <label for="countdownLabel">Label</label>
+          <input type="text" id="countdownLabel" placeholder="Anniversary">
+        </div>
+        <div class="field">
+          <label for="countdownDate">Date</label>
+          <input type="date" id="countdownDate">
+        </div>
+        <div class="field" style="flex:0 0 150px;">
+          <label for="countdownType">Type</label>
+          <select id="countdownType">
+            <option value="once">One-time</option>
+            <option value="birthday">Birthday (recurring)</option>
+            <option value="anniversary">Anniversary (recurring)</option>
+          </select>
+        </div>
+      </div>
+      <button class="primary" id="addCountdownBtn">Add Countdown</button>
+    </div>
+    <div id="countdownList"></div>
+  </div>
+</div>
+
+<script>
+  // ---------- Browser storage bridge (stands in for the desktop app's
+  // Electron/IPC file storage) ----------
+  const STORAGE_KEY = 'phillip-os-task-manager-data';
+  const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+  function normalizeStore(raw) {
+    raw = raw || {};
+    let days = raw.days;
+    if (!days) {
+      days = {};
+      for (const k of Object.keys(raw)) {
+        if (DATE_KEY_PATTERN.test(k)) days[k] = raw[k];
+      }
+    }
+    return {
+      days,
+      countdowns: Array.isArray(raw.countdowns) ? raw.countdowns : [],
+      events: Array.isArray(raw.events) ? raw.events : [],
+      reminders: Array.isArray(raw.reminders) ? raw.reminders : [],
+      pomodoro: raw.pomodoro && typeof raw.pomodoro === 'object'
+        ? { workMin: Number(raw.pomodoro.workMin) || 25, breakMin: Number(raw.pomodoro.breakMin) || 5 }
+        : { workMin: 25, breakMin: 5 }
+    };
+  }
+
+  window.quickNote = {
+    load: async () => {
+      let raw = {};
+      try {
+        const text = localStorage.getItem(STORAGE_KEY);
+        raw = text ? JSON.parse(text) : {};
+      } catch (e) {
+        raw = {};
+      }
+      return normalizeStore(raw);
+    },
+    save: async (store) => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+      return { ok: true };
+    },
+    exportBackup: async (store) => {
+      const blob = new Blob([JSON.stringify(store, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `phillip-os-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      return { canceled: false };
+    },
+    importBackup: () => new Promise((resolve) => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'application/json';
+      input.addEventListener('change', async () => {
+        const file = input.files[0];
+        if (!file) { resolve({ canceled: true }); return; }
+        try {
+          const text = await file.text();
+          const data = JSON.parse(text);
+          resolve({ canceled: false, data });
+        } catch (e) {
+          console.error('Import failed:', e);
+          alert('Import failed: ' + (e && e.message ? e.message : 'invalid file'));
+          resolve({ canceled: true });
+        }
+      });
+      input.click();
+    }),
+    openExternal: async (url) => {
+      window.open(url, '_blank');
+    }
+  };
+
+  if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+    Notification.requestPermission().catch(() => {});
+  }
+</script>
+<script>
+  // ---------- Helpers ----------
+  function todayKey() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function todayDisplay() {
+    return new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  }
+  function nowTimeStr() {
+    const d = new Date();
+    return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+  function escapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+  function fmtTimeDisplay(t) {
+    if (!t) return '';
+    const [h, m] = t.split(':').map(Number);
+    const period = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return `${h12}:${String(m).padStart(2, '0')} ${period}`;
+  }
+  function uid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+  function ymd(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function isSameDay(a, b) {
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  }
+  function daysUntil(targetDateStr) {
+    const [y, m, d] = targetDateStr.split('-').map(Number);
+    const target = new Date(y, m - 1, d);
+    const today = new Date();
+    const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    return Math.round((target - todayOnly) / 86400000);
+  }
+  function notify(title, body) {
+    try { new Notification(title, { body }); } catch (e) { console.error('Notification failed:', e); }
+  }
+
+  const dateKey = todayKey();
+  const statusText = document.getElementById('statusText');
+
+  let store = { days: {}, countdowns: [], events: [], reminders: [], pomodoro: { workMin: 25, breakMin: 5 } };
+  let day = { notes: '', calls: [], todos: [] };
+
+  let saveTimer = null;
+  function persist(hint) {
+    if (hint) statusText.textContent = hint;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(async () => {
+      try {
+        await window.quickNote.save(store);
+        statusText.textContent = 'Saved · ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      } catch (e) {
+        console.error('Save failed:', e);
+        statusText.textContent = 'Save failed — see console; use Export Backup to be safe';
+      }
+    }, 300);
+  }
+
+  document.getElementById('headerDate').textContent = todayDisplay();
+  document.getElementById('todayLabel').textContent = 'Today · ' + todayDisplay();
+
+  // ---------- Tabs ----------
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  // ---------- Clock ----------
+  function tickClock() {
+    document.getElementById('clock').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+  tickClock();
+  setInterval(tickClock, 1000);
+
+  // ---------- Notes ----------
+  const notesArea = document.getElementById('notesArea');
+  const saveHint = document.getElementById('saveHint');
+  let notesSaveTimer = null;
+
+  notesArea.addEventListener('input', () => {
+    day.notes = notesArea.value;
+    saveHint.textContent = 'saving...';
+    clearTimeout(notesSaveTimer);
+    notesSaveTimer = setTimeout(async () => {
+      try {
+        await window.quickNote.save(store);
+        saveHint.textContent = 'saved · ' + new Date().toLocaleTimeString();
+      } catch (e) {
+        console.error('Notes save failed:', e);
+        saveHint.textContent = 'save failed — see console';
+      }
+    }, 400);
+  });
+
+  document.getElementById('copyNotesBtn').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    try {
+      await navigator.clipboard.writeText(notesArea.value);
+      btn.textContent = 'Copied';
+    } catch (err) {
+      btn.textContent = 'Copy failed';
+    }
+    setTimeout(() => { btn.textContent = 'Copy Notes'; }, 2000);
+  });
+
+  // ---------- Calls ----------
+  const callDate = document.getElementById('callDate');
+  const callTime = document.getElementById('callTime');
+  const hasAction = document.getElementById('hasAction');
+  const actionField = document.getElementById('actionField');
+  const callList = document.getElementById('callList');
+  const callBadge = document.getElementById('callBadge');
+
+  callDate.value = dateKey;
+  callTime.value = nowTimeStr();
+
+  hasAction.addEventListener('change', () => {
+    actionField.style.display = hasAction.checked ? 'block' : 'none';
+  });
+
+  function renderCalls() {
+    callBadge.textContent = day.calls.length;
+    if (day.calls.length === 0) {
+      callList.innerHTML = '<div class="empty-state">No calls logged today.</div>';
+      return;
+    }
+    callList.innerHTML = '';
+    [...day.calls].reverse().forEach((c) => {
+      const idx = day.calls.indexOf(c);
+      const div = document.createElement('div');
+      div.className = 'entry';
+      div.innerHTML = `
+        <div class="entry-top">
+          <div class="entry-name">${escapeHtml(c.name || '(no name)')}</div>
+          <div class="entry-time">${fmtTimeDisplay(c.time)} · ${c.date}</div>
+        </div>
+        <div class="entry-line"><strong>Callback:</strong> ${escapeHtml(c.number || '—')}</div>
+        ${c.message ? `<div class="entry-msg">${escapeHtml(c.message)}</div>` : ''}
+        ${c.action ? `<div class="entry-action">Action: ${escapeHtml(c.action)}</div>` : ''}
+        <div class="entry-actions">
+          <button class="small" data-action="email" data-idx="${idx}">Email via Outlook</button>
+          <button class="small" data-action="copy" data-idx="${idx}">Copy Details</button>
+          ${c.action ? `<button class="small" data-action="todoist" data-idx="${idx}">Add to Todoist</button>` : ''}
+          <button class="small danger" data-action="delete" data-idx="${idx}">Delete</button>
+        </div>
+      `;
+      callList.appendChild(div);
+    });
+  }
+
+  document.getElementById('addCallBtn').addEventListener('click', () => {
+    const name = document.getElementById('callerName').value.trim();
+    const number = document.getElementById('callerNumber').value.trim();
+    const date = callDate.value || dateKey;
+    const time = callTime.value || nowTimeStr();
+    const message = document.getElementById('callMessage').value.trim();
+    const action = hasAction.checked ? document.getElementById('actionText').value.trim() : '';
+
+    if (!name && !number && !message && !action) return;
+
+    day.calls.push({ name, number, date, time, message, action });
+    renderCalls();
+    persist('saving call...');
+
+    document.getElementById('callerName').value = '';
+    document.getElementById('callerNumber').value = '';
+    document.getElementById('callMessage').value = '';
+    document.getElementById('actionText').value = '';
+    hasAction.checked = false;
+    actionField.style.display = 'none';
+    callDate.value = todayKey();
+    callTime.value = nowTimeStr();
+  });
+
+  callList.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const idx = parseInt(btn.dataset.idx, 10);
+    const c = day.calls[idx];
+    if (!c) return;
+    const action = btn.dataset.action;
+
+    if (action === 'delete') {
+      day.calls.splice(idx, 1);
+      renderCalls();
+      persist('saving...');
+    } else if (action === 'email') {
+      const bodyText = `Caller: ${c.name || ''}\nCallback #: ${c.number || ''}\nDate: ${c.date}\nTime: ${fmtTimeDisplay(c.time)}\n\nMessage:\n${c.message || ''}` +
+        (c.action ? `\n\nAction item: ${c.action}` : '');
+      const subject = encodeURIComponent(`Message from ${c.name || 'caller'}`);
+      const body = encodeURIComponent(bodyText);
+      const outlookUrl = `https://outlook.office.com/mail/deeplink/compose?subject=${subject}&body=${body}`;
+      await window.quickNote.openExternal(outlookUrl);
+    } else if (action === 'copy') {
+      const bodyText = `Caller: ${c.name || ''}\nCallback #: ${c.number || ''}\nDate: ${c.date}\nTime: ${fmtTimeDisplay(c.time)}\n\nMessage:\n${c.message || ''}` +
+        (c.action ? `\n\nAction item: ${c.action}` : '');
+      try {
+        await navigator.clipboard.writeText(bodyText);
+        btn.textContent = 'Copied';
+      } catch (err) {
+        btn.textContent = 'Copy failed';
+      }
+      setTimeout(() => { btn.textContent = 'Copy Details'; }, 2000);
+    } else if (action === 'todoist') {
+      const details = [c.name, c.number].filter(Boolean).join(', ');
+      const content = encodeURIComponent(`${c.action}${details ? ' (re: ' + details + ')' : ''}`);
+      await window.quickNote.openExternal(`https://todoist.com/add?content=${content}`);
+    }
+  });
+
+  // ---------- Reminders (created from the Calendar tab, for any date) ----------
+  const reminderList = document.getElementById('reminderList');
+
+  function todaysReminders() {
+    return store.reminders.filter(r => r.date === dateKey).sort((a, b) => a.time.localeCompare(b.time));
+  }
+
+  function renderReminders() {
+    const list = todaysReminders();
+    if (list.length === 0) {
+      reminderList.innerHTML = '<div class="empty-state">No reminders set for today.</div>';
+      return;
+    }
+    reminderList.innerHTML = '';
+    list.forEach((r) => {
+      const idx = store.reminders.indexOf(r);
+      const div = document.createElement('div');
+      div.className = 'entry';
+      div.innerHTML = `
+        <div class="checkbox-row" style="margin-bottom:0;">
+          <label style="flex:1;">${r.fired ? '✓ ' : ''}${escapeHtml(fmtTimeDisplay(r.time))} — ${escapeHtml(r.text)}</label>
+          <button class="small danger" data-idx="${idx}">Remove</button>
+        </div>
+      `;
+      reminderList.appendChild(div);
+    });
+  }
+
+  reminderList.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-idx]');
+    if (!btn) return;
+    const idx = parseInt(btn.dataset.idx, 10);
+    store.reminders.splice(idx, 1);
+    renderReminders();
+    persist('saving...');
+  });
+
+  function checkReminders() {
+    const now = new Date();
+    let changed = false;
+    store.reminders.forEach((r) => {
+      const when = new Date(`${r.date}T${r.time}`);
+      if (!r.fired && when <= now) {
+        r.fired = true;
+        changed = true;
+        notify('Reminder', r.text);
+      }
+    });
+    if (changed) {
+      renderReminders();
+      persist();
+    }
+  }
+  setInterval(checkReminders, 20000);
+
+  // ---------- To-Do (today) ----------
+  const todoInput = document.getElementById('todoInput');
+  const todoList = document.getElementById('todoList');
+  const todoBadge = document.getElementById('todoBadge');
+
+  function renderTodos() {
+    todoBadge.textContent = day.todos.filter(t => !t.done).length;
+    if (day.todos.length === 0) {
+      todoList.innerHTML = '<div class="empty-state">No to-dos yet today.</div>';
+      return;
+    }
+    todoList.innerHTML = '';
+    day.todos.forEach((t, idx) => {
+      const div = document.createElement('div');
+      div.className = 'entry';
+      div.innerHTML = `
+        <div class="checkbox-row" style="margin-bottom:0;">
+          <input type="checkbox" data-action="toggle-todo" data-idx="${idx}" ${t.done ? 'checked' : ''}>
+          <label style="flex:1;${t.done ? ' text-decoration:line-through; color:var(--text-dim);' : ''}">${escapeHtml(t.text)}</label>
+          <button class="small" data-action="send-todoist" data-idx="${idx}">Send to Todoist</button>
+          <button class="small danger" data-action="delete-todo" data-idx="${idx}">Remove</button>
+        </div>
+      `;
+      todoList.appendChild(div);
+    });
+  }
+
+  document.getElementById('addTodoBtn').addEventListener('click', () => {
+    const text = todoInput.value.trim();
+    if (!text) return;
+    day.todos.push({ text, done: false });
+    renderTodos();
+    persist('saving...');
+    todoInput.value = '';
+    const hint = document.getElementById('todoSaveHint');
+    if (hint) { hint.textContent = 'added'; }
+  });
+
+  todoInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('addTodoBtn').click();
+  });
+
+  todoList.addEventListener('change', (e) => {
+    const cb = e.target.closest('input[data-action="toggle-todo"]');
+    if (!cb) return;
+    const idx = parseInt(cb.dataset.idx, 10);
+    day.todos[idx].done = cb.checked;
+    renderTodos();
+    persist('saving...');
+  });
+
+  todoList.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const idx = parseInt(btn.dataset.idx, 10);
+    if (btn.dataset.action === 'delete-todo') {
+      day.todos.splice(idx, 1);
+      renderTodos();
+      persist('saving...');
+    } else if (btn.dataset.action === 'send-todoist') {
+      const t = day.todos[idx];
+      await window.quickNote.openExternal(`https://todoist.com/add?content=${encodeURIComponent(t.text)}`);
+      btn.textContent = 'Sent!';
+      setTimeout(() => { btn.textContent = 'Send to Todoist'; }, 2000);
+    }
+  });
+
+  // ---------- Pomodoro ----------
+  const pomoWorkInput = document.getElementById('pomoWork');
+  const pomoBreakInput = document.getElementById('pomoBreak');
+  const pomoDisplay = document.getElementById('pomoDisplay');
+  const pomoLabel = document.getElementById('pomoLabel');
+  const pomoStartBtn = document.getElementById('pomoStart');
+  const pomoResetBtn = document.getElementById('pomoReset');
+
+  let pomoMode = 'work';
+  let pomoRemaining = 25 * 60;
+  let pomoRunning = false;
+  let pomoIntervalId = null;
+
+  function pomoDurationSec() {
+    const mins = pomoMode === 'work' ? Number(pomoWorkInput.value) || 25 : Number(pomoBreakInput.value) || 5;
+    return mins * 60;
+  }
+
+  function renderPomoDisplay() {
+    const m = Math.floor(pomoRemaining / 60);
+    const s = pomoRemaining % 60;
+    pomoDisplay.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    pomoLabel.textContent = pomoMode === 'work' ? 'Work' : 'Break';
+    pomoStartBtn.textContent = pomoRunning ? 'Pause' : 'Start';
+  }
+
+  function resetPomo() {
+    clearInterval(pomoIntervalId);
+    pomoRunning = false;
+    pomoRemaining = pomoDurationSec();
+    renderPomoDisplay();
+  }
+
+  function tickPomo() {
+    pomoRemaining--;
+    if (pomoRemaining <= 0) {
+      clearInterval(pomoIntervalId);
+      pomoRunning = false;
+      notify(pomoMode === 'work' ? 'Work session done' : 'Break over', pomoMode === 'work' ? 'Take a break.' : 'Back to work.');
+      pomoMode = pomoMode === 'work' ? 'break' : 'work';
+      pomoRemaining = pomoDurationSec();
+      renderPomoDisplay();
+      return;
+    }
+    renderPomoDisplay();
+  }
+
+  pomoStartBtn.addEventListener('click', () => {
+    if (pomoRunning) {
+      clearInterval(pomoIntervalId);
+      pomoRunning = false;
+    } else {
+      pomoRunning = true;
+      pomoIntervalId = setInterval(tickPomo, 1000);
+    }
+    renderPomoDisplay();
+  });
+
+  pomoResetBtn.addEventListener('click', resetPomo);
+
+  [pomoWorkInput, pomoBreakInput].forEach((input) => {
+    input.addEventListener('change', () => {
+      store.pomodoro = { workMin: Number(pomoWorkInput.value) || 25, breakMin: Number(pomoBreakInput.value) || 5 };
+      persist('saving...');
+      if (!pomoRunning) resetPomo();
+    });
+  });
+
+  // ---------- Countdowns ----------
+  const countdownList = document.getElementById('countdownList');
+  const countdownBadge = document.getElementById('countdownBadge');
+
+  function monthDayOf(dateStr) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return { year: y, month: m - 1, day: d };
+  }
+
+  function nextOccurrence(md) {
+    const today = new Date();
+    const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    let next = new Date(today.getFullYear(), md.month, md.day);
+    if (next < todayOnly) next = new Date(today.getFullYear() + 1, md.month, md.day);
+    return next;
+  }
+
+  function yearsMonthsBetween(start, end) {
+    let years = end.getFullYear() - start.getFullYear();
+    let months = end.getMonth() - start.getMonth();
+    if (end.getDate() < start.getDate()) months--;
+    if (months < 0) { years--; months += 12; }
+    return { years, months };
+  }
+
+  function countdownDaysAndSubtitle(c) {
+    const md = monthDayOf(c.targetDate);
+    if (c.kind === 'birthday' || c.kind === 'anniversary') {
+      const next = nextOccurrence(md);
+      const today = new Date();
+      const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const n = Math.round((next - todayOnly) / 86400000);
+      if (c.kind === 'birthday') {
+        const turning = next.getFullYear() - md.year;
+        return { n, subtitle: `Turns ${turning}` };
+      }
+      const original = new Date(md.year, md.month, md.day);
+      const { years, months } = yearsMonthsBetween(original, todayOnly);
+      const yStr = years === 1 ? '1 year' : `${years} years`;
+      const mStr = months === 1 ? '1 month' : `${months} months`;
+      return { n, subtitle: months > 0 ? `${yStr}, ${mStr}` : yStr };
+    }
+    return { n: daysUntil(c.targetDate), subtitle: '' };
+  }
+
+  function renderCountdowns() {
+    countdownBadge.textContent = store.countdowns.length;
+    if (store.countdowns.length === 0) {
+      countdownList.innerHTML = '<div class="empty-state">No countdowns yet.</div>';
+      return;
+    }
+    const withCalc = store.countdowns.map(c => ({ c, ...countdownDaysAndSubtitle(c) }));
+    withCalc.sort((a, b) => a.n - b.n);
+    countdownList.innerHTML = '';
+    withCalc.forEach(({ c, n, subtitle }) => {
+      const idx = store.countdowns.indexOf(c);
+      const unit = n === 0 ? 'Today!' : (n === 1 ? 'day left' : n === -1 ? 'day ago' : n > 0 ? 'days left' : 'days ago');
+      const div = document.createElement('div');
+      div.className = 'entry';
+      div.innerHTML = `
+        <div class="countdown-entry">
+          <div class="countdown-days">${n === 0 ? '★' : Math.abs(n)}<span class="unit">${unit}</span></div>
+          <div class="countdown-info">
+            <div class="countdown-label">${escapeHtml(c.label)}</div>
+            <div class="countdown-date">${c.targetDate}</div>
+            ${subtitle ? `<div class="countdown-sub">${escapeHtml(subtitle)}</div>` : ''}
+          </div>
+          <button class="small danger" data-idx="${idx}">Delete</button>
+        </div>
+      `;
+      countdownList.appendChild(div);
+    });
+  }
+
+  document.getElementById('addCountdownBtn').addEventListener('click', () => {
+    const label = document.getElementById('countdownLabel').value.trim();
+    const targetDate = document.getElementById('countdownDate').value;
+    const kind = document.getElementById('countdownType').value;
+    if (!label || !targetDate) return;
+    store.countdowns.push({ id: uid(), label, targetDate, kind });
+    renderCountdowns();
+    persist('saving countdown...');
+    document.getElementById('countdownLabel').value = '';
+    document.getElementById('countdownDate').value = '';
+    document.getElementById('countdownType').value = 'once';
+  });
+
+  countdownList.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-idx]');
+    if (!btn) return;
+    const idx = parseInt(btn.dataset.idx, 10);
+    store.countdowns.splice(idx, 1);
+    renderCountdowns();
+    persist('saving...');
+  });
+
+  // ---------- Calendar ----------
+  const calState = { view: 'day', anchor: new Date() };
+  const eventAllDay = document.getElementById('eventAllDay');
+  const eventStart = document.getElementById('eventStart');
+  const eventEnd = document.getElementById('eventEnd');
+  const calReminderText = document.getElementById('calReminderText');
+  const calReminderDate = document.getElementById('calReminderDate');
+  const calReminderTime = document.getElementById('calReminderTime');
+
+  document.getElementById('eventDate').value = dateKey;
+  calReminderDate.value = dateKey;
+
+  eventAllDay.addEventListener('change', () => {
+    eventStart.disabled = eventAllDay.checked;
+    eventEnd.disabled = eventAllDay.checked;
+  });
+
+  document.getElementById('addCalReminderBtn').addEventListener('click', () => {
+    const text = calReminderText.value.trim();
+    const date = calReminderDate.value;
+    const time = calReminderTime.value;
+    if (!text || !date || !time) return;
+    store.reminders.push({ id: uid(), text, date, time, fired: false });
+    if (date === dateKey) renderReminders();
+    persist('saving reminder...');
+    calReminderText.value = '';
+    calReminderTime.value = '';
+  });
+
+  document.getElementById('addEventBtn').addEventListener('click', () => {
+    const title = document.getElementById('eventTitle').value.trim();
+    const date = document.getElementById('eventDate').value;
+    if (!title || !date) return;
+    const allDay = eventAllDay.checked;
+    store.events.push({
+      id: uid(),
+      title,
+      date,
+      startTime: allDay ? '' : eventStart.value,
+      endTime: allDay ? '' : eventEnd.value,
+      allDay
+    });
+    renderCalendar();
+    persist('saving event...');
+    document.getElementById('eventTitle').value = '';
+    eventStart.value = '';
+    eventEnd.value = '';
+    eventAllDay.checked = false;
+    eventStart.disabled = false;
+    eventEnd.disabled = false;
+  });
+
+  function eventsOn(dateStr) {
+    return store.events.filter(ev => ev.date === dateStr).sort((a, b) => {
+      if (a.allDay && !b.allDay) return -1;
+      if (!a.allDay && b.allDay) return 1;
+      return (a.startTime || '').localeCompare(b.startTime || '');
+    });
+  }
+
+  function fmtEventTime(ev) {
+    if (ev.allDay) return 'All day';
+    const start = fmtTimeDisplay(ev.startTime);
+    const end = fmtTimeDisplay(ev.endTime);
+    return end ? `${start} – ${end}` : start;
+  }
+
+  function eventEntryHtml(ev) {
+    const idx = store.events.indexOf(ev);
+    return `
+      <div class="entry">
+        <div class="entry-top">
+          <div class="entry-name">${escapeHtml(ev.title)}</div>
+          <div class="entry-time">${fmtEventTime(ev)}</div>
+        </div>
+        <div class="entry-actions"><button class="small danger" data-idx="${idx}">Delete</button></div>
+      </div>
+    `;
+  }
+
+  function setActiveView(view) {
+    calState.view = view;
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  }
+
+  document.querySelectorAll('.view-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      setActiveView(btn.dataset.view);
+      renderCalendar();
+    });
+  });
+
+  document.getElementById('calPrev').addEventListener('click', () => navigateCal(-1));
+  document.getElementById('calNext').addEventListener('click', () => navigateCal(1));
+  document.getElementById('calToday').addEventListener('click', () => {
+    calState.anchor = new Date();
+    renderCalendar();
+  });
+
+  function navigateCal(dir) {
+    const a = calState.anchor;
+    if (calState.view === 'month') {
+      calState.anchor = new Date(a.getFullYear(), a.getMonth() + dir, 1);
+    } else if (calState.view === 'week') {
+      calState.anchor = new Date(a.getFullYear(), a.getMonth(), a.getDate() + dir * 7);
+    } else {
+      calState.anchor = new Date(a.getFullYear(), a.getMonth(), a.getDate() + dir);
+    }
+    renderCalendar();
+  }
+
+  document.getElementById('calendarBody').addEventListener('click', (e) => {
+    const delBtn = e.target.closest('button[data-idx]');
+    if (delBtn) {
+      const idx = parseInt(delBtn.dataset.idx, 10);
+      store.events.splice(idx, 1);
+      renderCalendar();
+      persist('saving...');
+      return;
+    }
+    const cell = e.target.closest('.cal-cell');
+    if (cell) {
+      const [y, m, dd] = cell.dataset.date.split('-').map(Number);
+      calState.anchor = new Date(y, m - 1, dd);
+      setActiveView('day');
+      renderCalendar();
+    }
+  });
+
+  function renderCalendar() {
+    const body = document.getElementById('calendarBody');
+    const label = document.getElementById('calLabel');
+    body.innerHTML = '';
+    calReminderDate.value = ymd(calState.anchor);
+
+    if (calState.view === 'month') {
+      const anchor = calState.anchor;
+      const year = anchor.getFullYear();
+      const month = anchor.getMonth();
+      label.textContent = anchor.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+
+      const firstOfMonth = new Date(year, month, 1);
+      const startDay = firstOfMonth.getDay();
+      const gridStart = new Date(year, month, 1 - startDay);
+
+      const weekdays = document.createElement('div');
+      weekdays.className = 'cal-weekdays';
+      ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach((w) => {
+        const el = document.createElement('div');
+        el.textContent = w;
+        weekdays.appendChild(el);
+      });
+      body.appendChild(weekdays);
+
+      const grid = document.createElement('div');
+      grid.className = 'cal-grid';
+      const today = new Date();
+      for (let i = 0; i < 42; i++) {
+        const d = new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + i);
+        const dStr = ymd(d);
+        const cell = document.createElement('div');
+        cell.className = 'cal-cell' + (d.getMonth() !== month ? ' other-month' : '') + (isSameDay(d, today) ? ' today' : '');
+        cell.dataset.date = dStr;
+        const dayEvents = eventsOn(dStr);
+        cell.innerHTML = `<div class="cal-daynum">${d.getDate()}</div>` +
+          dayEvents.slice(0, 3).map(ev => `<div class="cal-event">${escapeHtml(ev.title)}</div>`).join('') +
+          (dayEvents.length > 3 ? `<div class="cal-event">+${dayEvents.length - 3} more</div>` : '');
+        grid.appendChild(cell);
+      }
+      body.appendChild(grid);
+    } else if (calState.view === 'week') {
+      const anchor = calState.anchor;
+      const start = new Date(anchor);
+      start.setDate(anchor.getDate() - anchor.getDay());
+      const days = [];
+      for (let i = 0; i < 7; i++) days.push(new Date(start.getFullYear(), start.getMonth(), start.getDate() + i));
+      const end = days[6];
+      label.textContent = `${start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} – ${end.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
+
+      days.forEach((d) => {
+        const dStr = ymd(d);
+        const dayEvents = eventsOn(dStr);
+        const section = document.createElement('div');
+        section.className = 'agenda-day';
+        const header = document.createElement('div');
+        header.className = 'agenda-day-header';
+        header.textContent = d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+        section.appendChild(header);
+        if (dayEvents.length === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'empty-state';
+          empty.style.padding = '12px 0';
+          empty.textContent = 'No events.';
+          section.appendChild(empty);
+        } else {
+          section.innerHTML += dayEvents.map(eventEntryHtml).join('');
+        }
+        body.appendChild(section);
+      });
+    } else {
+      const d = calState.anchor;
+      const dStr = ymd(d);
+      label.textContent = d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+      const dayEvents = eventsOn(dStr);
+      const section = document.createElement('div');
+      section.className = 'agenda-day';
+      section.innerHTML = dayEvents.length === 0
+        ? '<div class="empty-state">No events for this day.</div>'
+        : dayEvents.map(eventEntryHtml).join('');
+      body.appendChild(section);
+    }
+  }
+
+  // ---------- Export / Import ----------
+  document.getElementById('exportBtn').addEventListener('click', async () => {
+    const result = await window.quickNote.exportBackup(store);
+    if (!result.canceled) {
+      statusText.textContent = 'Backup exported';
+    }
+  });
+
+  document.getElementById('importBtn').addEventListener('click', async () => {
+    const result = await window.quickNote.importBackup();
+    if (result.canceled) return;
+    const data = result.data;
+
+    if (data && data.days) {
+      store.days = Object.assign({}, store.days, data.days);
+      if (Array.isArray(data.countdowns)) store.countdowns = data.countdowns;
+      if (Array.isArray(data.events)) store.events = data.events;
+      if (Array.isArray(data.reminders)) store.reminders = data.reminders;
+      if (data.pomodoro) store.pomodoro = data.pomodoro;
+    } else if (data && (typeof data.notes === 'string' || Array.isArray(data.calls) || Array.isArray(data.todos))) {
+      const importDate = data.date || dateKey;
+      store.days[importDate] = {
+        notes: typeof data.notes === 'string' ? data.notes : '',
+        calls: Array.isArray(data.calls) ? data.calls : [],
+        todos: Array.isArray(data.todos) ? data.todos : []
+      };
+    }
+
+    day = store.days[dateKey] || { notes: '', calls: [], todos: [] };
+    store.days[dateKey] = day;
+
+    notesArea.value = day.notes || '';
+    pomoWorkInput.value = store.pomodoro.workMin;
+    pomoBreakInput.value = store.pomodoro.breakMin;
+    resetPomo();
+    renderCalls();
+    renderTodos();
+    renderReminders();
+    renderCountdowns();
+    renderCalendar();
+
+    await window.quickNote.save(store);
+    statusText.textContent = 'Import complete';
+  });
+
+  // ---------- Startup ----------
+  (async () => {
+    store = await window.quickNote.load();
+    day = store.days[dateKey] || { notes: '', calls: [], todos: [] };
+    store.days[dateKey] = day;
+
+    notesArea.value = day.notes || '';
+    pomoWorkInput.value = store.pomodoro.workMin;
+    pomoBreakInput.value = store.pomodoro.breakMin;
+    pomoRemaining = pomoDurationSec();
+    renderPomoDisplay();
+
+    renderCalls();
+    renderTodos();
+    renderReminders();
+    renderCountdowns();
+    renderCalendar();
+
+    statusText.textContent = 'Saved';
+    checkReminders();
+  })();
+</script>
+</body>
+</html>
