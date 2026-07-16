@@ -5,12 +5,20 @@ today's to-dos) is now one tab among several:
 
 - **Notes** — the original quick note, autosaved as you type
 - **Calls** — call log with Outlook/Todoist quick actions
-- **Today** — today's to-dos, plus reminders that fire a desktop
-  notification at a set time (only while the app is open)
-- **Calendar** — day/week/month views of events you create in the app.
-  Not connected to Google/Outlook/Todoist calendars yet — that's a later
-  phase.
-- **Countdowns** — TickTick-style countdowns to any date
+- **Today** — a native to-do list (check items off, or optionally send one
+  to Todoist — nothing is sent automatically), plus a read-only view of
+  today's reminders
+- **Calendar** — day/week/month views of events you create in the app,
+  and where reminders actually get set (for any date, not just today —
+  the reminder form on this tab defaults to whichever day you're
+  viewing). Fires a desktop notification at the set time, only while the
+  app is open. Not connected to Google/Outlook/Todoist calendars yet —
+  that's a later phase.
+- **Countdowns** — TickTick-style countdowns. One-time dates count up/down
+  normally; **Birthday** and **Anniversary** countdowns recur annually —
+  they show days until the next occurrence plus the age you'll turn (for
+  birthdays) or years/months elapsed (for anniversaries), computed from
+  the original date you entered.
 
 There's also a clock next to the date, and an adjustable Pomodoro timer
 (work/break minutes) next to the Export/Import buttons.

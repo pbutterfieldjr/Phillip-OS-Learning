@@ -224,13 +224,11 @@ callList.addEventListener('click', async (e) => {
   }
 });
 
-// ---------- Reminders (today only) ----------
-const reminderTextInput = document.getElementById('reminderText');
-const reminderTimeInput = document.getElementById('reminderTime');
+// ---------- Reminders (created from the Calendar tab, for any date) ----------
 const reminderList = document.getElementById('reminderList');
 
 function todaysReminders() {
-  return store.reminders.filter(r => r.when.slice(0, 10) === dateKey).sort((a, b) => a.when.localeCompare(b.when));
+  return store.reminders.filter(r => r.date === dateKey).sort((a, b) => a.time.localeCompare(b.time));
 }
 
 function renderReminders() {
@@ -242,29 +240,17 @@ function renderReminders() {
   reminderList.innerHTML = '';
   list.forEach((r) => {
     const idx = store.reminders.indexOf(r);
-    const time = r.when.slice(11, 16);
     const div = document.createElement('div');
     div.className = 'entry';
     div.innerHTML = `
       <div class="checkbox-row" style="margin-bottom:0;">
-        <label style="flex:1;">${r.fired ? '✓ ' : ''}${escapeHtml(fmtTimeDisplay(time))} — ${escapeHtml(r.text)}</label>
+        <label style="flex:1;">${r.fired ? '✓ ' : ''}${escapeHtml(fmtTimeDisplay(r.time))} — ${escapeHtml(r.text)}</label>
         <button class="small danger" data-idx="${idx}">Remove</button>
       </div>
     `;
     reminderList.appendChild(div);
   });
 }
-
-document.getElementById('addReminderBtn').addEventListener('click', () => {
-  const text = reminderTextInput.value.trim();
-  const time = reminderTimeInput.value;
-  if (!text || !time) return;
-  store.reminders.push({ id: uid(), text, when: `${dateKey}T${time}`, fired: false });
-  renderReminders();
-  persist('saving reminder...');
-  reminderTextInput.value = '';
-  reminderTimeInput.value = '';
-});
 
 reminderList.addEventListener('click', (e) => {
   const btn = e.target.closest('button[data-idx]');
@@ -279,7 +265,8 @@ function checkReminders() {
   const now = new Date();
   let changed = false;
   store.reminders.forEach((r) => {
-    if (!r.fired && new Date(r.when) <= now) {
+    const when = new Date(`${r.date}T${r.time}`);
+    if (!r.fired && when <= now) {
       r.fired = true;
       changed = true;
       notify('Reminder', r.text);
@@ -298,9 +285,9 @@ const todoList = document.getElementById('todoList');
 const todoBadge = document.getElementById('todoBadge');
 
 function renderTodos() {
-  todoBadge.textContent = day.todos.length;
+  todoBadge.textContent = day.todos.filter(t => !t.done).length;
   if (day.todos.length === 0) {
-    todoList.innerHTML = '<div class="empty-state">Nothing sent to Todoist yet today.</div>';
+    todoList.innerHTML = '<div class="empty-state">No to-dos yet today.</div>';
     return;
   }
   todoList.innerHTML = '';
@@ -309,37 +296,53 @@ function renderTodos() {
     div.className = 'entry';
     div.innerHTML = `
       <div class="checkbox-row" style="margin-bottom:0;">
-        <label style="flex:1;">${escapeHtml(t.text)}</label>
-        <button class="small danger" data-action="delete-todo" data-idx="${idx}">Remove from log</button>
+        <input type="checkbox" data-action="toggle-todo" data-idx="${idx}" ${t.done ? 'checked' : ''}>
+        <label style="flex:1;${t.done ? ' text-decoration:line-through; color:var(--text-dim);' : ''}">${escapeHtml(t.text)}</label>
+        <button class="small" data-action="send-todoist" data-idx="${idx}">Send to Todoist</button>
+        <button class="small danger" data-action="delete-todo" data-idx="${idx}">Remove</button>
       </div>
     `;
     todoList.appendChild(div);
   });
 }
 
-document.getElementById('addTodoBtn').addEventListener('click', async () => {
+document.getElementById('addTodoBtn').addEventListener('click', () => {
   const text = todoInput.value.trim();
   if (!text) return;
-  await window.quickNote.openExternal(`https://todoist.com/add?content=${encodeURIComponent(text)}`);
-  day.todos.push({ text });
+  day.todos.push({ text, done: false });
   renderTodos();
   persist('saving...');
   todoInput.value = '';
   const hint = document.getElementById('todoSaveHint');
-  if (hint) { hint.textContent = 'sent to Todoist inbox'; }
+  if (hint) { hint.textContent = 'added'; }
 });
 
 todoInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') document.getElementById('addTodoBtn').click();
 });
 
-todoList.addEventListener('click', (e) => {
-  const btn = e.target.closest('button[data-action="delete-todo"]');
-  if (btn) {
-    const idx = parseInt(btn.dataset.idx, 10);
+todoList.addEventListener('change', (e) => {
+  const cb = e.target.closest('input[data-action="toggle-todo"]');
+  if (!cb) return;
+  const idx = parseInt(cb.dataset.idx, 10);
+  day.todos[idx].done = cb.checked;
+  renderTodos();
+  persist('saving...');
+});
+
+todoList.addEventListener('click', async (e) => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  const idx = parseInt(btn.dataset.idx, 10);
+  if (btn.dataset.action === 'delete-todo') {
     day.todos.splice(idx, 1);
     renderTodos();
     persist('saving...');
+  } else if (btn.dataset.action === 'send-todoist') {
+    const t = day.todos[idx];
+    await window.quickNote.openExternal(`https://todoist.com/add?content=${encodeURIComponent(t.text)}`);
+    btn.textContent = 'Sent!';
+    setTimeout(() => { btn.textContent = 'Send to Todoist'; }, 2000);
   }
 });
 
@@ -415,17 +418,60 @@ pomoResetBtn.addEventListener('click', resetPomo);
 const countdownList = document.getElementById('countdownList');
 const countdownBadge = document.getElementById('countdownBadge');
 
+function monthDayOf(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return { year: y, month: m - 1, day: d };
+}
+
+// Next occurrence of a month/day from today onward (this year, or next year
+// if it's already passed) — used for recurring birthdays/anniversaries.
+function nextOccurrence(md) {
+  const today = new Date();
+  const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  let next = new Date(today.getFullYear(), md.month, md.day);
+  if (next < todayOnly) next = new Date(today.getFullYear() + 1, md.month, md.day);
+  return next;
+}
+
+function yearsMonthsBetween(start, end) {
+  let years = end.getFullYear() - start.getFullYear();
+  let months = end.getMonth() - start.getMonth();
+  if (end.getDate() < start.getDate()) months--;
+  if (months < 0) { years--; months += 12; }
+  return { years, months };
+}
+
+function countdownDaysAndSubtitle(c) {
+  const md = monthDayOf(c.targetDate);
+  if (c.kind === 'birthday' || c.kind === 'anniversary') {
+    const next = nextOccurrence(md);
+    const today = new Date();
+    const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const n = Math.round((next - todayOnly) / 86400000);
+    if (c.kind === 'birthday') {
+      const turning = next.getFullYear() - md.year;
+      return { n, subtitle: `Turns ${turning}` };
+    }
+    const original = new Date(md.year, md.month, md.day);
+    const { years, months } = yearsMonthsBetween(original, todayOnly);
+    const yStr = years === 1 ? '1 year' : `${years} years`;
+    const mStr = months === 1 ? '1 month' : `${months} months`;
+    return { n, subtitle: months > 0 ? `${yStr}, ${mStr}` : yStr };
+  }
+  return { n: daysUntil(c.targetDate), subtitle: '' };
+}
+
 function renderCountdowns() {
   countdownBadge.textContent = store.countdowns.length;
   if (store.countdowns.length === 0) {
     countdownList.innerHTML = '<div class="empty-state">No countdowns yet.</div>';
     return;
   }
-  const sorted = [...store.countdowns].sort((a, b) => daysUntil(a.targetDate) - daysUntil(b.targetDate));
+  const withCalc = store.countdowns.map(c => ({ c, ...countdownDaysAndSubtitle(c) }));
+  withCalc.sort((a, b) => a.n - b.n);
   countdownList.innerHTML = '';
-  sorted.forEach((c) => {
+  withCalc.forEach(({ c, n, subtitle }) => {
     const idx = store.countdowns.indexOf(c);
-    const n = daysUntil(c.targetDate);
     const unit = n === 0 ? 'Today!' : (n === 1 ? 'day left' : n === -1 ? 'day ago' : n > 0 ? 'days left' : 'days ago');
     const div = document.createElement('div');
     div.className = 'entry';
@@ -435,6 +481,7 @@ function renderCountdowns() {
         <div class="countdown-info">
           <div class="countdown-label">${escapeHtml(c.label)}</div>
           <div class="countdown-date">${c.targetDate}</div>
+          ${subtitle ? `<div class="countdown-sub">${escapeHtml(subtitle)}</div>` : ''}
         </div>
         <button class="small danger" data-idx="${idx}">Delete</button>
       </div>
@@ -446,12 +493,14 @@ function renderCountdowns() {
 document.getElementById('addCountdownBtn').addEventListener('click', () => {
   const label = document.getElementById('countdownLabel').value.trim();
   const targetDate = document.getElementById('countdownDate').value;
+  const kind = document.getElementById('countdownType').value;
   if (!label || !targetDate) return;
-  store.countdowns.push({ id: uid(), label, targetDate });
+  store.countdowns.push({ id: uid(), label, targetDate, kind });
   renderCountdowns();
   persist('saving countdown...');
   document.getElementById('countdownLabel').value = '';
   document.getElementById('countdownDate').value = '';
+  document.getElementById('countdownType').value = 'once';
 });
 
 countdownList.addEventListener('click', (e) => {
@@ -468,12 +517,28 @@ const calState = { view: 'day', anchor: new Date() };
 const eventAllDay = document.getElementById('eventAllDay');
 const eventStart = document.getElementById('eventStart');
 const eventEnd = document.getElementById('eventEnd');
+const calReminderText = document.getElementById('calReminderText');
+const calReminderDate = document.getElementById('calReminderDate');
+const calReminderTime = document.getElementById('calReminderTime');
 
 document.getElementById('eventDate').value = dateKey;
+calReminderDate.value = dateKey;
 
 eventAllDay.addEventListener('change', () => {
   eventStart.disabled = eventAllDay.checked;
   eventEnd.disabled = eventAllDay.checked;
+});
+
+document.getElementById('addCalReminderBtn').addEventListener('click', () => {
+  const text = calReminderText.value.trim();
+  const date = calReminderDate.value;
+  const time = calReminderTime.value;
+  if (!text || !date || !time) return;
+  store.reminders.push({ id: uid(), text, date, time, fired: false });
+  if (date === dateKey) renderReminders();
+  persist('saving reminder...');
+  calReminderText.value = '';
+  calReminderTime.value = '';
 });
 
 document.getElementById('addEventBtn').addEventListener('click', () => {
@@ -580,6 +645,7 @@ function renderCalendar() {
   const body = document.getElementById('calendarBody');
   const label = document.getElementById('calLabel');
   body.innerHTML = '';
+  calReminderDate.value = ymd(calState.anchor);
 
   if (calState.view === 'month') {
     const anchor = calState.anchor;

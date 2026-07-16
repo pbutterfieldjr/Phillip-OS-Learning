@@ -225,7 +225,7 @@
     margin-bottom: 6px;
   }
 
-  input[type=text], input[type=tel], input[type=date], input[type=time], textarea.field-input {
+  input[type=text], input[type=tel], input[type=date], input[type=time], select, textarea.field-input {
     width: 100%;
     background: #1c1c1c;
     border: 1px solid #2e2e2e;
@@ -236,7 +236,7 @@
     border-radius: 3px;
     outline: none;
   }
-  input:focus, textarea.field-input:focus { border-color: var(--gold-dim); }
+  input:focus, select:focus, textarea.field-input:focus { border-color: var(--gold-dim); }
 
   textarea.field-input { min-height: 70px; resize: vertical; }
 
@@ -365,6 +365,23 @@
   .countdown-info { flex: 1; }
   .countdown-label { font-size: 15px; font-weight: 600; }
   .countdown-date { font-size: 11px; color: var(--text-dim); }
+  .countdown-sub { font-size: 12px; color: var(--gold-dim); margin-top: 2px; }
+
+  /* Compact dual-column forms (Calendar tab) */
+  .card.compact { padding: 14px 16px; }
+  .dual-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 640px) {
+    .dual-form { grid-template-columns: 1fr; }
+  }
+  .form-col .form-title { margin-bottom: 8px; }
+  .row.tight { gap: 8px; margin-bottom: 8px; }
+  .row.tight .field { margin-bottom: 0; }
+  .checkbox-row.tight { margin-bottom: 8px; }
+  .dual-form input, .dual-form select { padding: 6px 8px; font-size: 12px; }
 
   /* Calendar */
   .calendar-toolbar {
@@ -532,19 +549,9 @@
   <div class="panel" id="panel-todos">
     <div class="section-title" id="todayLabel"></div>
 
-    <div class="card">
-      <div class="form-title">Set a Reminder (today)</div>
-      <div class="row">
-        <div class="field">
-          <input type="text" id="reminderText" placeholder="Call the vet back">
-        </div>
-        <div class="field" style="flex: 0 0 130px;">
-          <input type="time" id="reminderTime">
-        </div>
-      </div>
-      <button class="primary" id="addReminderBtn">Set Reminder</button>
-    </div>
+    <div class="section-title" style="margin-top:0;">Reminders today</div>
     <div id="reminderList"></div>
+    <div class="status-line">Set new reminders from the Calendar tab (any date, not just today).</div>
 
     <div class="card">
       <div class="form-title">Add a To-Do</div>
@@ -560,33 +567,36 @@
   </div>
 
   <div class="panel" id="panel-calendar">
-    <div class="card">
-      <div class="form-title">Add Event</div>
-      <div class="row">
-        <div class="field">
-          <label for="eventTitle">Title</label>
-          <input type="text" id="eventTitle" placeholder="Dentist appointment">
+    <div class="card compact">
+      <div class="dual-form">
+        <div class="form-col">
+          <div class="form-title">Add Event</div>
+          <div class="row tight">
+            <div class="field"><input type="text" id="eventTitle" placeholder="Title"></div>
+          </div>
+          <div class="row tight">
+            <div class="field"><input type="date" id="eventDate"></div>
+            <div class="field" style="flex:0 0 88px;"><input type="time" id="eventStart"></div>
+            <div class="field" style="flex:0 0 88px;"><input type="time" id="eventEnd"></div>
+          </div>
+          <div class="checkbox-row tight">
+            <input type="checkbox" id="eventAllDay">
+            <label for="eventAllDay">All day</label>
+          </div>
+          <button class="primary small" id="addEventBtn">Add Event</button>
         </div>
-        <div class="field">
-          <label for="eventDate">Date</label>
-          <input type="date" id="eventDate">
+        <div class="form-col">
+          <div class="form-title">Add Reminder</div>
+          <div class="row tight">
+            <div class="field"><input type="text" id="calReminderText" placeholder="Remind me to..."></div>
+          </div>
+          <div class="row tight">
+            <div class="field"><input type="date" id="calReminderDate"></div>
+            <div class="field" style="flex:0 0 88px;"><input type="time" id="calReminderTime"></div>
+          </div>
+          <button class="primary small" id="addCalReminderBtn">Set Reminder</button>
         </div>
       </div>
-      <div class="row">
-        <div class="field">
-          <label for="eventStart">Start Time</label>
-          <input type="time" id="eventStart">
-        </div>
-        <div class="field">
-          <label for="eventEnd">End Time</label>
-          <input type="time" id="eventEnd">
-        </div>
-      </div>
-      <div class="checkbox-row">
-        <input type="checkbox" id="eventAllDay">
-        <label for="eventAllDay">All day</label>
-      </div>
-      <button class="primary" id="addEventBtn">Add Event</button>
     </div>
 
     <div class="calendar-toolbar">
@@ -615,8 +625,16 @@
           <input type="text" id="countdownLabel" placeholder="Anniversary">
         </div>
         <div class="field">
-          <label for="countdownDate">Target Date</label>
+          <label for="countdownDate">Date</label>
           <input type="date" id="countdownDate">
+        </div>
+        <div class="field" style="flex:0 0 150px;">
+          <label for="countdownType">Type</label>
+          <select id="countdownType">
+            <option value="once">One-time</option>
+            <option value="birthday">Birthday (recurring)</option>
+            <option value="anniversary">Anniversary (recurring)</option>
+          </select>
         </div>
       </div>
       <button class="primary" id="addCountdownBtn">Add Countdown</button>
