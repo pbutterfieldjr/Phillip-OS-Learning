@@ -5,6 +5,7 @@
   "main": "main.js",
   "private": true,
   "scripts": {
+    "prestart": "node fix-electron-dist.js",
     "start": "electron .",
     "dist": "electron-builder"
   },
